@@ -1,0 +1,11 @@
+final ->
+docker-compose up -d
+http://localhost:3000
+docker-compose down
+
+will run frontend, backend, db all
+
+Bookmark these URLs
+App: http://localhost:3000
+API docs: http://localhost:8000/docs
+DB health: http://localhost:8000/health/db

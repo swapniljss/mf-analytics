@@ -1,0 +1,886 @@
+{
+  "info": {
+    "name": "Mutual Fund Analytics API",
+    "description": "Complete API collection for the Mutual Fund Analytics Dashboard. Base URL: http://localhost:8000\n\nData Sources: AMFI India (Scheme Master, NAV, AUM, Tracking, Disclosures, Market Cap).\n\nAll list endpoints support pagination via `page` and `page_size` query params.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "mf-analytics-v2"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8000", "type": "string" },
+    { "key": "amfi_code", "value": "120503", "type": "string", "description": "Sample: Mirae Asset Large Cap Fund - Direct Growth" },
+    { "key": "report_month", "value": "2025-06", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "1. Scheme Master",
+      "item": [
+        {
+          "name": "List Schemes",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/scheme-master?search=mirae&amc_name=Mirae&category=Large+Cap&plan_type=Direct&page=1&page_size=50",
+              "host": ["{{base_url}}"],
+              "path": ["scheme-master"],
+              "query": [
+                { "key": "search", "value": "mirae", "description": "Search by scheme name or AMFI code" },
+                { "key": "amc_name", "value": "Mirae", "description": "Filter by AMC name (partial match)" },
+                { "key": "category", "value": "Large Cap", "description": "Filter by scheme category" },
+                { "key": "plan_type", "value": "Direct", "description": "Direct or Regular" },
+                { "key": "page", "value": "1" },
+                { "key": "page_size", "value": "50" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Single Scheme",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/scheme-master/{{amfi_code}}", "host": ["{{base_url}}"], "path": ["scheme-master", "{{amfi_code}}"] }
+          }
+        },
+        {
+          "name": "Update Scheme Metadata (PATCH)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/scheme-master/{{amfi_code}}", "host": ["{{base_url}}"], "path": ["scheme-master", "{{amfi_code}}"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fund_manager_name\": \"Harshad Borawake\",\n  \"fund_manager_experience\": \"18 years\",\n  \"investment_objective\": \"To generate long-term capital appreciation from a portfolio predominantly of equity and equity-related instruments of large cap companies.\",\n  \"face_value\": 10,\n  \"min_investment_amount\": 5000,\n  \"additional_investment_amount\": 1000,\n  \"sip_min_amount\": 500,\n  \"dividend_frequency\": \"Annual\",\n  \"maturity_type\": \"Open-ended\",\n  \"exit_load\": \"1% if redeemed within 1 year\",\n  \"entry_load\": \"Nil\",\n  \"alternate_benchmark\": \"BSE 100 TRI\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Sync Scheme Master from AMFI",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{base_url}}/scheme-master/sync", "host": ["{{base_url}}"], "path": ["scheme-master", "sync"] }
+          }
+        },
+        {
+          "name": "List AMCs",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/scheme-master/amcs", "host": ["{{base_url}}"], "path": ["scheme-master", "amcs"] }
+          }
+        },
+        {
+          "name": "List Categories",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/scheme-master/categories", "host": ["{{base_url}}"], "path": ["scheme-master", "categories"] }
+          }
+        },
+        {
+          "name": "List AMC Master",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/scheme-master/amc-master/list?page=1&page_size=50", "host": ["{{base_url}}"], "path": ["scheme-master", "amc-master", "list"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. NAV",
+      "item": [
+        {
+          "name": "List Daily NAV",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/nav/daily?search=mirae&page=1&page_size=100",
+              "host": ["{{base_url}}"],
+              "path": ["nav", "daily"],
+              "query": [
+                { "key": "search", "value": "mirae" },
+                { "key": "page", "value": "1" },
+                { "key": "page_size", "value": "100" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Latest NAV Date",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/nav/daily/latest-date", "host": ["{{base_url}}"], "path": ["nav", "daily", "latest-date"] }
+          }
+        },
+        {
+          "name": "Sync Today's NAV from AMFI",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{base_url}}/nav/sync", "host": ["{{base_url}}"], "path": ["nav", "sync"] }
+          }
+        },
+        {
+          "name": "Get NAV History for Scheme",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/nav/{{amfi_code}}/history?from_date=2024-04-01&to_date=2025-04-01",
+              "host": ["{{base_url}}"],
+              "path": ["nav", "{{amfi_code}}", "history"],
+              "query": [
+                { "key": "from_date", "value": "2024-04-01" },
+                { "key": "to_date", "value": "2025-04-01" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Fetch Historical NAV for Date Range",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/nav/historical/fetch-range?from_date=2024-01-01&to_date=2025-04-01",
+              "host": ["{{base_url}}"],
+              "path": ["nav", "historical", "fetch-range"],
+              "query": [
+                { "key": "from_date", "value": "2024-01-01" },
+                { "key": "to_date", "value": "2025-04-01" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Bulk Fetch All Historical NAV (2005-present)",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/nav/historical/bulk-fetch-all?from_year=2005",
+              "host": ["{{base_url}}"],
+              "path": ["nav", "historical", "bulk-fetch-all"],
+              "query": [{ "key": "from_year", "value": "2005" }]
+            },
+            "description": "⚠️ Long-running. Seeds entire NAV history year by year from 2005."
+          }
+        },
+        {
+          "name": "List Historical Import Batches",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/nav/historical/batches?page=1&page_size=20", "host": ["{{base_url}}"], "path": ["nav", "historical", "batches"] }
+          }
+        },
+        {
+          "name": "Upload Historical NAV File",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{base_url}}/nav/historical/upload", "host": ["{{base_url}}"], "path": ["nav", "historical", "upload"] },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "file", "type": "file", "src": "/path/to/NAVAll.txt", "description": "AMFI NAVAll.txt format" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. AUM",
+      "item": [
+        {
+          "name": "Scheme-wise AUM",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/aum/scheme-wise?fy_id=1&period_id=1&amc_name=Mirae&page=1&page_size=50",
+              "host": ["{{base_url}}"],
+              "path": ["aum", "scheme-wise"],
+              "query": [
+                { "key": "fy_id", "value": "1", "description": "Financial year ID from /aum/periods" },
+                { "key": "period_id", "value": "1", "description": "Period ID (half-year)" },
+                { "key": "amc_name", "value": "Mirae" },
+                { "key": "page", "value": "1" },
+                { "key": "page_size", "value": "50" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Fund-wise AUM",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/aum/fund-wise?fy_id=1&period_id=1&page=1&page_size=50",
+              "host": ["{{base_url}}"],
+              "path": ["aum", "fund-wise"],
+              "query": [
+                { "key": "fy_id", "value": "1" },
+                { "key": "period_id", "value": "1" },
+                { "key": "page", "value": "1" },
+                { "key": "page_size", "value": "50" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "AUM Periods",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/aum/periods", "host": ["{{base_url}}"], "path": ["aum", "periods"] }
+          }
+        },
+        {
+          "name": "Sync Scheme-wise AUM",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/aum/sync/scheme-wise?fy_id=1&period_id=1",
+              "host": ["{{base_url}}"],
+              "path": ["aum", "sync", "scheme-wise"],
+              "query": [{ "key": "fy_id", "value": "1" }, { "key": "period_id", "value": "1" }]
+            }
+          }
+        },
+        {
+          "name": "Sync Fund-wise AUM",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/aum/sync/fund-wise?fy_id=1&period_id=1",
+              "host": ["{{base_url}}"],
+              "path": ["aum", "sync", "fund-wise"],
+              "query": [{ "key": "fy_id", "value": "1" }, { "key": "period_id", "value": "1" }]
+            }
+          }
+        },
+        {
+          "name": "Bulk Sync All AUM Periods",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{base_url}}/aum/sync/bulk", "host": ["{{base_url}}"], "path": ["aum", "sync", "bulk"] },
+            "description": "⚠️ Fetches all historical AUM periods. May take several minutes."
+          }
+        },
+        {
+          "name": "AUM Sync Logs",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/aum/sync-logs", "host": ["{{base_url}}"], "path": ["aum", "sync-logs"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Analytics & Returns",
+      "item": [
+        {
+          "name": "4a. Snapshots",
+          "item": [
+            {
+              "name": "List All Snapshots",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{base_url}}/analytics/snapshots?search=mirae&category=Large+Cap&page=1&page_size=50",
+                  "host": ["{{base_url}}"],
+                  "path": ["analytics", "snapshots"],
+                  "query": [
+                    { "key": "search", "value": "mirae" },
+                    { "key": "category", "value": "Large Cap" },
+                    { "key": "page", "value": "1" },
+                    { "key": "page_size", "value": "50" }
+                  ]
+                },
+                "description": "Returns all computed analytics fields including: latest_nav, returns (1W-10Y), SIP returns, 52W high/low, Sharpe, Beta, Std Dev, Max Drawdown, Sortino, Calmar, VaR, Category Rank."
+              }
+            },
+            {
+              "name": "Get Scheme Snapshot",
+              "request": {
+                "method": "GET",
+                "url": { "raw": "{{base_url}}/analytics/scheme/{{amfi_code}}/snapshot", "host": ["{{base_url}}"], "path": ["analytics", "scheme", "{{amfi_code}}", "snapshot"] }
+              }
+            },
+            {
+              "name": "Refresh All Snapshots",
+              "request": {
+                "method": "POST",
+                "url": { "raw": "{{base_url}}/analytics/refresh-snapshots", "host": ["{{base_url}}"], "path": ["analytics", "refresh-snapshots"] },
+                "description": "Recomputes all analytics for all active schemes including category ranks. May take minutes for large datasets."
+              }
+            },
+            {
+              "name": "Dashboard Summary",
+              "request": {
+                "method": "GET",
+                "url": { "raw": "{{base_url}}/analytics/summary", "host": ["{{base_url}}"], "path": ["analytics", "summary"] }
+              }
+            },
+            {
+              "name": "Top Performers",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{base_url}}/analytics/top-performers?category=Large+Cap&period=return_1y&limit=10",
+                  "host": ["{{base_url}}"],
+                  "path": ["analytics", "top-performers"],
+                  "query": [
+                    { "key": "category", "value": "Large Cap" },
+                    { "key": "period", "value": "return_1y", "description": "return_1w | return_1m | return_3m | return_6m | return_1y | return_3y | return_5y | return_10y" },
+                    { "key": "limit", "value": "10" }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "4b. Returns & History",
+          "item": [
+            {
+              "name": "Scheme Returns + NAV History",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{base_url}}/analytics/scheme/{{amfi_code}}/returns?from_date=2024-04-01&to_date=2025-04-01",
+                  "host": ["{{base_url}}"],
+                  "path": ["analytics", "scheme", "{{amfi_code}}", "returns"],
+                  "query": [
+                    { "key": "from_date", "value": "2024-04-01" },
+                    { "key": "to_date", "value": "2025-04-01" }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Rolling Returns (1Y periods)",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{base_url}}/analytics/scheme/{{amfi_code}}/rolling-returns?period_years=1",
+                  "host": ["{{base_url}}"],
+                  "path": ["analytics", "scheme", "{{amfi_code}}", "rolling-returns"],
+                  "query": [{ "key": "period_years", "value": "1", "description": "0.5 | 1 | 3 | 5 | 10" }]
+                },
+                "description": "Returns min/max/mean/median + % periods with positive/8%+/12%+ returns. Includes rolling series for charting."
+              }
+            },
+            {
+              "name": "Rolling Returns (3Y periods)",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{base_url}}/analytics/scheme/{{amfi_code}}/rolling-returns?period_years=3",
+                  "host": ["{{base_url}}"],
+                  "path": ["analytics", "scheme", "{{amfi_code}}", "rolling-returns"],
+                  "query": [{ "key": "period_years", "value": "3" }]
+                }
+              }
+            },
+            {
+              "name": "Calendar Year Returns",
+              "request": {
+                "method": "GET",
+                "url": { "raw": "{{base_url}}/analytics/scheme/{{amfi_code}}/calendar-returns", "host": ["{{base_url}}"], "path": ["analytics", "scheme", "{{amfi_code}}", "calendar-returns"] },
+                "description": "Year-by-year absolute return. e.g. 2020: -5.2%, 2021: 42.1%"
+              }
+            }
+          ]
+        },
+        {
+          "name": "4c. Category Comparison",
+          "item": [
+            {
+              "name": "Category Comparison - Large Cap 1Y",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{base_url}}/analytics/category/comparison?category=Large+Cap+Fund&period=return_1y&page=1&page_size=50",
+                  "host": ["{{base_url}}"],
+                  "path": ["analytics", "category", "comparison"],
+                  "query": [
+                    { "key": "category", "value": "Large Cap Fund" },
+                    { "key": "period", "value": "return_1y" },
+                    { "key": "page", "value": "1" },
+                    { "key": "page_size", "value": "50" }
+                  ]
+                },
+                "description": "All schemes in a category ranked by return with category avg/max/min stats and quartile assignments."
+              }
+            },
+            {
+              "name": "Category Comparison - Mid Cap 3Y",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{base_url}}/analytics/category/comparison?category=Mid+Cap+Fund&period=return_3y&page=1&page_size=50",
+                  "host": ["{{base_url}}"],
+                  "path": ["analytics", "category", "comparison"],
+                  "query": [
+                    { "key": "category", "value": "Mid Cap Fund" },
+                    { "key": "period", "value": "return_3y" },
+                    { "key": "page", "value": "1" },
+                    { "key": "page_size", "value": "50" }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "4d. Direct vs Regular",
+          "item": [
+            {
+              "name": "Compare Direct vs Regular Plan",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{base_url}}/analytics/compare/direct-regular?amfi_code={{amfi_code}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["analytics", "compare", "direct-regular"],
+                  "query": [{ "key": "amfi_code", "value": "{{amfi_code}}" }]
+                },
+                "description": "Finds the paired Direct/Regular plan. Returns expense gap, return differential, and compounding impact of choosing Direct over 10 years per ₹1L invested."
+              }
+            }
+          ]
+        },
+        {
+          "name": "4e. Goal Calculators",
+          "item": [
+            {
+              "name": "Lumpsum Calculator",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{base_url}}/analytics/goal/lumpsum?amount=100000&rate=12&years=10&inflation=6&tax_rate=10",
+                  "host": ["{{base_url}}"],
+                  "path": ["analytics", "goal", "lumpsum"],
+                  "query": [
+                    { "key": "amount", "value": "100000", "description": "Initial investment in ₹" },
+                    { "key": "rate", "value": "12", "description": "Expected annual return %" },
+                    { "key": "years", "value": "10" },
+                    { "key": "inflation", "value": "6" },
+                    { "key": "tax_rate", "value": "10", "description": "LTCG rate %" }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "SIP Calculator",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{base_url}}/analytics/goal/sip?monthly_amount=10000&rate=12&years=15&step_up=10",
+                  "host": ["{{base_url}}"],
+                  "path": ["analytics", "goal", "sip"],
+                  "query": [
+                    { "key": "monthly_amount", "value": "10000" },
+                    { "key": "rate", "value": "12" },
+                    { "key": "years", "value": "15" },
+                    { "key": "step_up", "value": "10", "description": "Annual SIP step-up %" }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Retirement Planning Calculator",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{base_url}}/analytics/goal/retirement?current_age=30&retirement_age=60&monthly_expense=50000&corpus_years=25&expected_return=12&post_return=8&inflation=6",
+                  "host": ["{{base_url}}"],
+                  "path": ["analytics", "goal", "retirement"],
+                  "query": [
+                    { "key": "current_age", "value": "30" },
+                    { "key": "retirement_age", "value": "60" },
+                    { "key": "monthly_expense", "value": "50000", "description": "Current monthly expenses in ₹" },
+                    { "key": "corpus_years", "value": "25", "description": "Years the corpus should last post-retirement" },
+                    { "key": "expected_return", "value": "12", "description": "Pre-retirement return %" },
+                    { "key": "post_return", "value": "8", "description": "Post-retirement investment return %" },
+                    { "key": "inflation", "value": "6" }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "5. Market Cap Categorization",
+      "item": [
+        {
+          "name": "Upload Market Cap Excel",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{base_url}}/market-cap/upload", "host": ["{{base_url}}"], "path": ["market-cap", "upload"] },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "file", "type": "file", "src": "/path/to/AverageMarketCapitalization30Jun2025.xlsx" },
+                { "key": "effective_date", "value": "", "description": "Optional override YYYY-MM-DD. Auto-detected from file title." }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Uploads",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/market-cap/uploads?page=1&page_size=20", "host": ["{{base_url}}"], "path": ["market-cap", "uploads"] }
+          }
+        },
+        {
+          "name": "Browse Market Cap Rows",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/market-cap/rows?bucket=Large+Cap&search=HDFC&page=1&page_size=100",
+              "host": ["{{base_url}}"],
+              "path": ["market-cap", "rows"],
+              "query": [
+                { "key": "bucket", "value": "Large Cap", "description": "Large Cap | Mid Cap | Small Cap" },
+                { "key": "search", "value": "HDFC" },
+                { "key": "page", "value": "1" },
+                { "key": "page_size", "value": "100" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Latest Market Cap Snapshot",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/market-cap/latest?bucket=Mid+Cap&page=1&page_size=100",
+              "host": ["{{base_url}}"],
+              "path": ["market-cap", "latest"],
+              "query": [
+                { "key": "bucket", "value": "Mid Cap" },
+                { "key": "page", "value": "1" },
+                { "key": "page_size", "value": "100" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Disclosures",
+      "item": [
+        {
+          "name": "Monthly Disclosure",
+          "item": [
+            {
+              "name": "Upload Monthly Disclosure",
+              "request": {
+                "method": "POST",
+                "url": { "raw": "{{base_url}}/disclosure/monthly/upload", "host": ["{{base_url}}"], "path": ["disclosure", "monthly", "upload"] },
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    { "key": "file", "type": "file", "src": "/path/to/amfeb2026repo.xls" },
+                    { "key": "report_month", "value": "2026-02" }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "List Monthly Uploads",
+              "request": {
+                "method": "GET",
+                "url": { "raw": "{{base_url}}/disclosure/monthly/uploads", "host": ["{{base_url}}"], "path": ["disclosure", "monthly", "uploads"] }
+              }
+            },
+            {
+              "name": "Browse Monthly Rows",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{base_url}}/disclosure/monthly/rows?amfi_code={{amfi_code}}&page=1&page_size=50",
+                  "host": ["{{base_url}}"],
+                  "path": ["disclosure", "monthly", "rows"],
+                  "query": [{ "key": "amfi_code", "value": "{{amfi_code}}" }, { "key": "page", "value": "1" }, { "key": "page_size", "value": "50" }]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Quarterly Disclosure",
+          "item": [
+            {
+              "name": "Upload Quarterly Disclosure",
+              "request": {
+                "method": "POST",
+                "url": { "raw": "{{base_url}}/disclosure/quarterly/upload", "host": ["{{base_url}}"], "path": ["disclosure", "quarterly", "upload"] },
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    { "key": "file", "type": "file", "src": "/path/to/aqu-vol24-issueIV.xls" },
+                    { "key": "report_quarter", "value": "2025-12-31" }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Browse Quarterly Rows (Risk Ratios)",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{base_url}}/disclosure/quarterly/rows?amfi_code={{amfi_code}}&page=1&page_size=20",
+                  "host": ["{{base_url}}"],
+                  "path": ["disclosure", "quarterly", "rows"],
+                  "query": [{ "key": "amfi_code", "value": "{{amfi_code}}" }, { "key": "page", "value": "1" }, { "key": "page_size", "value": "20" }]
+                },
+                "description": "Returns Beta, Sharpe Ratio, Std Deviation per scheme per quarter."
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sub-Classification",
+          "item": [
+            {
+              "name": "Upload Sub-Classification",
+              "request": {
+                "method": "POST",
+                "url": { "raw": "{{base_url}}/disclosure/sub-classification/upload", "host": ["{{base_url}}"], "path": ["disclosure", "sub-classification", "upload"] },
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    { "key": "file", "type": "file", "src": "/path/to/Sub-classification-Feb26.xlsx" },
+                    { "key": "report_month", "value": "2026-02" }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Browse Sub-Classification Rows",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{base_url}}/disclosure/sub-classification/rows?page=1&page_size=50",
+                  "host": ["{{base_url}}"],
+                  "path": ["disclosure", "sub-classification", "rows"],
+                  "query": [{ "key": "page", "value": "1" }, { "key": "page_size", "value": "50" }]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "7. Tracking Error & Difference",
+      "item": [
+        {
+          "name": "List Tracking Errors",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/tracking/error?period_type=1Y&amc_name=Mirae&page=1&page_size=50",
+              "host": ["{{base_url}}"],
+              "path": ["tracking", "error"],
+              "query": [
+                { "key": "period_type", "value": "1Y" },
+                { "key": "amc_name", "value": "Mirae" },
+                { "key": "page", "value": "1" },
+                { "key": "page_size", "value": "50" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Tracking Differences",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/tracking/difference?page=1&page_size=50",
+              "host": ["{{base_url}}"],
+              "path": ["tracking", "difference"],
+              "query": [{ "key": "page", "value": "1" }, { "key": "page_size", "value": "50" }]
+            }
+          }
+        },
+        {
+          "name": "Scheme Tracking Error History",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/tracking/{{amfi_code}}/error-history", "host": ["{{base_url}}"], "path": ["tracking", "{{amfi_code}}", "error-history"] }
+          }
+        },
+        {
+          "name": "Scheme Tracking Difference History",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/tracking/{{amfi_code}}/difference-history", "host": ["{{base_url}}"], "path": ["tracking", "{{amfi_code}}", "difference-history"] }
+          }
+        },
+        {
+          "name": "Sync Tracking Error",
+          "request": { "method": "POST", "url": { "raw": "{{base_url}}/tracking/sync/error", "host": ["{{base_url}}"], "path": ["tracking", "sync", "error"] } }
+        },
+        {
+          "name": "Sync Tracking Difference",
+          "request": { "method": "POST", "url": { "raw": "{{base_url}}/tracking/sync/difference", "host": ["{{base_url}}"], "path": ["tracking", "sync", "difference"] } }
+        },
+        {
+          "name": "Sync Logs",
+          "request": { "method": "GET", "url": { "raw": "{{base_url}}/tracking/sync-logs", "host": ["{{base_url}}"], "path": ["tracking", "sync-logs"] } }
+        }
+      ]
+    },
+    {
+      "name": "8. Portfolio Holdings",
+      "item": [
+        {
+          "name": "Upload Portfolio Holdings CSV/Excel",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{base_url}}/portfolio/upload", "host": ["{{base_url}}"], "path": ["portfolio", "upload"] },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "file", "type": "file", "src": "/path/to/portfolio_holdings.csv", "description": "CSV with: amfi_code, company_name, company_isin, sector, quantity, market_value_cr, percentage_exposure, security_class, rating, rating_agency" },
+                { "key": "report_month", "value": "2025-06" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Uploads",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/portfolio/uploads", "host": ["{{base_url}}"], "path": ["portfolio", "uploads"] }
+          }
+        },
+        {
+          "name": "Available Months",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/portfolio/months", "host": ["{{base_url}}"], "path": ["portfolio", "months"] }
+          }
+        },
+        {
+          "name": "Browse Holdings",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/portfolio/holdings?report_month={{report_month}}&amfi_code={{amfi_code}}&sector=Financial+Services&search=HDFC&page=1&page_size=100",
+              "host": ["{{base_url}}"],
+              "path": ["portfolio", "holdings"],
+              "query": [
+                { "key": "report_month", "value": "{{report_month}}" },
+                { "key": "amfi_code", "value": "{{amfi_code}}" },
+                { "key": "sector", "value": "Financial Services" },
+                { "key": "search", "value": "HDFC" },
+                { "key": "page", "value": "1" },
+                { "key": "page_size", "value": "100" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Top Holdings for Scheme",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/portfolio/top-holdings/{{amfi_code}}?report_month={{report_month}}&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["portfolio", "top-holdings", "{{amfi_code}}"],
+              "query": [
+                { "key": "report_month", "value": "{{report_month}}" },
+                { "key": "limit", "value": "10" }
+              ]
+            },
+            "description": "Returns top N holdings by % exposure + top sectors breakdown + avg maturity/modified duration for debt funds."
+          }
+        },
+        {
+          "name": "Portfolio Overlap (Two Schemes)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/portfolio/overlap?amfi_code_1=120503&amfi_code_2=120504&report_month={{report_month}}",
+              "host": ["{{base_url}}"],
+              "path": ["portfolio", "overlap"],
+              "query": [
+                { "key": "amfi_code_1", "value": "120503", "description": "First scheme AMFI code" },
+                { "key": "amfi_code_2", "value": "120504", "description": "Second scheme AMFI code" },
+                { "key": "report_month", "value": "{{report_month}}" }
+              ]
+            },
+            "description": "Computes ISIN-weighted portfolio overlap between two schemes. overlap_percentage = sum of min(w1, w2) for common stocks."
+          }
+        },
+        {
+          "name": "Portfolio Concentration",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/portfolio/concentration/{{amfi_code}}?report_month={{report_month}}",
+              "host": ["{{base_url}}"],
+              "path": ["portfolio", "concentration", "{{amfi_code}}"],
+              "query": [{ "key": "report_month", "value": "{{report_month}}" }]
+            },
+            "description": "Returns HHI (Herfindahl-Hirschman Index), top5/top10 weight%, and ranked top 10 holdings."
+          }
+        },
+        {
+          "name": "Available Sectors",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/portfolio/sectors?report_month={{report_month}}",
+              "host": ["{{base_url}}"],
+              "path": ["portfolio", "sectors"],
+              "query": [{ "key": "report_month", "value": "{{report_month}}" }]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "9. Dividends / IDCW",
+      "item": [
+        {
+          "name": "Upload Dividend History CSV",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{base_url}}/dividends/upload", "host": ["{{base_url}}"], "path": ["dividends", "upload"] },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "file", "type": "file", "src": "/path/to/dividends.csv", "description": "CSV: amfi_code, record_date (YYYY-MM-DD), dividend_per_unit, nav_on_record_date, dividend_type (IDCW/Bonus)" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Dividend History",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/dividends/{{amfi_code}}?dividend_type=IDCW&from_date=2020-01-01&page=1&page_size=50",
+              "host": ["{{base_url}}"],
+              "path": ["dividends", "{{amfi_code}}"],
+              "query": [
+                { "key": "dividend_type", "value": "IDCW", "description": "IDCW | Bonus | Special" },
+                { "key": "from_date", "value": "2020-01-01" },
+                { "key": "page", "value": "1" },
+                { "key": "page_size", "value": "50" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Dividend Summary (Cumulative)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/dividends/{{amfi_code}}/summary", "host": ["{{base_url}}"], "path": ["dividends", "{{amfi_code}}", "summary"] },
+            "description": "Returns total count, latest dividend, and cumulative totals for 1Y/3Y/5Y."
+          }
+        }
+      ]
+    }
+  ]
+}

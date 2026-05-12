@@ -1,0 +1,1603 @@
+{
+  "info": {
+    "name": "Mutual Fund Analytics API",
+    "description": "Complete Postman collection for the Mutual Fund Analytics FastAPI backend.\n\n**Project:** AMFI mutual fund + NPS/APY analytics platform.\n**Backend:** FastAPI 0.115 / Python 3.13 / SQLAlchemy 2 / MySQL 8.\n**Auth:** NONE — every endpoint is public. CORS is the only network boundary. Do **not** add Authorization headers; the backend ignores them.\n**Base URL:** `{{baseUrl}}` defaults to `http://localhost:8000` (direct backend). Through the frontend proxy use `http://localhost:3000/api` (nginx) or `http://localhost:5173/api` (Vite dev). The `/api` prefix is stripped by the proxy.\n\n**Generated from:** `context.md` + verified against backend source code in `app/routers/*.py` and frontend usage in `frontend/src/api/*.ts` + `frontend/src/pages/*.tsx`.\n\n**Folders mirror FastAPI routers:** Health, Scheme Master, NAV, AUM, Analytics, Tracking, Disclosure, Market Cap, Portfolio, Dividends, NPS / APY, Admin.\n\n**Seeding suggestion (run once after first start):**\n1. `POST /scheme-master/sync` (~30s)\n2. `POST /nav/sync` (~10s)\n3. `POST /nav/historical/bulk-fetch-all?from_year=2021` (background, minutes)\n4. `POST /analytics/refresh-snapshots` (background, after #3)\n",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "mf-analytics-collection-v1"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8000" }
+  ],
+  "auth": { "type": "noauth" },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// No global auth header — backend has no auth layer.",
+          "// Use this hook to assert env vars are set, or to log request URLs in console.",
+          "if (!pm.environment.get('baseUrl') && !pm.collectionVariables.get('baseUrl')) {",
+          "    console.warn('baseUrl is not set. Default http://localhost:8000 will be used from collection variable.');",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Lightweight global assertions. Override per-request as needed.",
+          "pm.test('Status is 2xx or 3xx', function () {",
+          "    pm.expect(pm.response.code).to.be.below(400);",
+          "});",
+          "pm.test('Response time < 30s', function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(30000);",
+          "});"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "description": "Liveness + DB connectivity probes. Useful first-call after `docker-compose up`.",
+      "item": [
+        {
+          "name": "GET /health — Liveness",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/health", "host": ["{{baseUrl}}"], "path": ["health"] },
+            "description": "Returns `{status:'ok'}` if the FastAPI process is up."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": { "method": "GET", "url": { "raw": "{{baseUrl}}/health" } },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "content-type", "value": "application/json" }],
+              "body": "{\n  \"status\": \"ok\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "GET /health/db — DB connectivity",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/health/db", "host": ["{{baseUrl}}"], "path": ["health", "db"] },
+            "description": "Opens a SessionLocal, runs `SELECT VERSION()`, returns the MySQL version. Returns status `error` if pool exhausted or DB down."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"status\": \"ok\",\n  \"database\": \"connected\",\n  \"mysql_version\": \"8.0.46\"\n}"
+            },
+            {
+              "name": "200 (DB unavailable)",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"status\": \"error\",\n  \"database\": \"(2003, \\\"Can't connect to MySQL server on 'mysql'\\\")\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Scheme Master",
+      "description": "AMFI scheme master CRUD-lite + sync. AMC + category lookups feed sidebar/dropdowns.\n\n**Source:** `app/routers/scheme_master.py`, `services/scheme_master_service.py` (fetches `https://portal.amfiindia.com/DownloadSchemeData_Po.aspx?mf=0`).",
+      "item": [
+        {
+          "name": "GET /scheme-master — List schemes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/scheme-master?search=&amc_name=&category=&plan_type=&is_active=Y&page=1&page_size=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["scheme-master"],
+              "query": [
+                { "key": "search", "value": "", "description": "Free-text — matches scheme_name, amfi_code, isin_div_payout_growth via ILIKE." },
+                { "key": "amc_name", "value": "", "description": "Partial AMC name (ILIKE)." },
+                { "key": "category", "value": "", "description": "Partial scheme_category (ILIKE)." },
+                { "key": "plan_type", "value": "", "description": "Exact match e.g. 'Direct' or 'Regular'." },
+                { "key": "is_active", "value": "Y", "description": "'Y' or 'N'. Default 'Y'." },
+                { "key": "page", "value": "1" },
+                { "key": "page_size", "value": "50", "description": "1..500" }
+              ]
+            },
+            "description": "Returns `PaginatedResponse[SchemeMasterOut]`."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"amfi_code\": \"100027\",\n      \"isin_div_payout_growth\": \"INF209KA12Z1\",\n      \"isin_div_reinvestment\": null,\n      \"scheme_name\": \"Aditya Birla Sun Life Liquid Fund - Growth\",\n      \"amc_name\": \"Aditya Birla Sun Life Mutual Fund\",\n      \"fund_house\": \"Aditya Birla Sun Life Mutual Fund\",\n      \"scheme_category\": \"Liquid Fund\",\n      \"scheme_type\": \"Open Ended Schemes\",\n      \"plan_type\": \"Direct\",\n      \"option_type\": \"Growth\",\n      \"is_active\": \"Y\",\n      \"effective_from\": null,\n      \"created_at\": \"2026-05-06T15:30:00\"\n    }\n  ],\n  \"total\": 12345,\n  \"page\": 1,\n  \"page_size\": 50,\n  \"total_pages\": 247\n}"
+            }
+          ]
+        },
+        {
+          "name": "GET /scheme-master/amcs — Distinct AMC names",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/scheme-master/amcs", "host": ["{{baseUrl}}"], "path": ["scheme-master", "amcs"] },
+            "description": "Sorted distinct list of active AMC names. Used by frontend dropdowns."
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "[\n  \"Aditya Birla Sun Life Mutual Fund\",\n  \"Axis Mutual Fund\",\n  \"HDFC Mutual Fund\"\n]" }
+          ]
+        },
+        {
+          "name": "GET /scheme-master/categories — Distinct categories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/scheme-master/categories", "host": ["{{baseUrl}}"], "path": ["scheme-master", "categories"] }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "[\n  \"Equity Scheme - Large Cap Fund\",\n  \"Equity Scheme - Mid Cap Fund\",\n  \"Liquid Fund\"\n]" }
+          ]
+        },
+        {
+          "name": "GET /scheme-master/{amfi_code} — Get one scheme",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/scheme-master/{{amfiCode}}", "host": ["{{baseUrl}}"], "path": ["scheme-master", "{{amfiCode}}"] }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"id\": 1,\n  \"amfi_code\": \"100027\",\n  \"scheme_name\": \"Aditya Birla Sun Life Liquid Fund - Growth\",\n  \"amc_name\": \"Aditya Birla Sun Life Mutual Fund\",\n  \"scheme_category\": \"Liquid Fund\",\n  \"plan_type\": \"Direct\",\n  \"is_active\": \"Y\"\n}" },
+            { "name": "404 Not Found", "status": "Not Found", "code": 404, "_postman_previewlanguage": "json", "body": "{\n  \"detail\": \"Scheme not found\"\n}" }
+          ]
+        },
+        {
+          "name": "PATCH /scheme-master/{amfi_code} — Edit metadata",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/scheme-master/{{amfiCode}}", "host": ["{{baseUrl}}"], "path": ["scheme-master", "{{amfiCode}}"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"face_value\": 10.0,\n  \"investment_objective\": \"Long-term capital appreciation\",\n  \"fund_manager_name\": \"John Doe\",\n  \"fund_manager_experience\": \"15 years\",\n  \"alternate_benchmark\": \"NIFTY 50 TRI\",\n  \"min_investment_amount\": 5000,\n  \"additional_investment_amount\": 1000,\n  \"sip_min_amount\": 500,\n  \"dividend_frequency\": \"Quarterly\",\n  \"maturity_type\": \"Open\",\n  \"exit_load\": \"1% if redeemed within 1 year\",\n  \"entry_load\": \"Nil\"\n}"
+            },
+            "description": "All fields optional (SchemePatch model). Only provided keys are updated. **No auth — anyone can mutate.**"
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"message\": \"Updated metadata for 100027\",\n  \"detail\": null\n}" },
+            { "name": "404 Not Found", "status": "Not Found", "code": 404, "_postman_previewlanguage": "json", "body": "{\n  \"detail\": \"Scheme not found\"\n}" }
+          ]
+        },
+        {
+          "name": "POST /scheme-master/sync — Pull from AMFI",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/scheme-master/sync", "host": ["{{baseUrl}}"], "path": ["scheme-master", "sync"] },
+            "description": "Synchronous fetch from `https://portal.amfiindia.com/DownloadSchemeData_Po.aspx?mf=0`. Marks unseen schemes is_active='N'. ~30s typical."
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"message\": \"Sync completed\",\n  \"detail\": \"{'schemes_synced': 12345, 'new_schemes': 42}\"\n}" }
+          ]
+        },
+        {
+          "name": "GET /scheme-master/amc-master/list — AMC master rows",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/scheme-master/amc-master/list?search=&page=1&page_size=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["scheme-master", "amc-master", "list"],
+              "query": [
+                { "key": "search", "value": "" },
+                { "key": "page", "value": "1" },
+                { "key": "page_size", "value": "50" }
+              ]
+            }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"amc_name\": \"Aditya Birla Sun Life Mutual Fund\",\n      \"fund_house\": null,\n      \"amc_code\": null,\n      \"scheme_count\": 145,\n      \"is_active\": \"Y\"\n    }\n  ],\n  \"total\": 45,\n  \"page\": 1,\n  \"page_size\": 50,\n  \"total_pages\": 1\n}" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "NAV",
+      "description": "Daily + historical NAV from AMFI. `nav_price` is a VIEW that unions `daily_nav` + `historical_nav`.\n\n**Source:** `app/routers/nav.py`, `services/nav_service.py`.",
+      "item": [
+        {
+          "name": "GET /nav/daily — List daily NAV",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/nav/daily?search=&amfi_code=&nav_date=&page=1&page_size=100",
+              "host": ["{{baseUrl}}"],
+              "path": ["nav", "daily"],
+              "query": [
+                { "key": "search", "value": "", "description": "Partial scheme_name (ILIKE)." },
+                { "key": "amfi_code", "value": "" },
+                { "key": "nav_date", "value": "", "description": "YYYY-MM-DD exact match." },
+                { "key": "page", "value": "1" },
+                { "key": "page_size", "value": "100", "description": "1..1000" }
+              ]
+            }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"amfi_code\": \"100027\",\n      \"scheme_name\": \"Aditya Birla Sun Life Liquid Fund - Growth\",\n      \"nav\": 401.234567,\n      \"nav_date\": \"2026-05-05\",\n      \"fund_house\": \"Aditya Birla Sun Life Mutual Fund\",\n      \"isin_div_payout_growth\": \"INF209KA12Z1\",\n      \"isin_div_reinvestment\": null\n    }\n  ],\n  \"total\": 9876,\n  \"page\": 1,\n  \"page_size\": 100,\n  \"total_pages\": 99\n}" }
+          ]
+        },
+        {
+          "name": "GET /nav/daily/latest-date — Latest NAV date",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/nav/daily/latest-date", "host": ["{{baseUrl}}"], "path": ["nav", "daily", "latest-date"] }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"latest_nav_date\": \"2026-05-05\"\n}" },
+            { "name": "200 (no data)", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"latest_nav_date\": null\n}" }
+          ]
+        },
+        {
+          "name": "POST /nav/sync — Pull today's NAV",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/nav/sync", "host": ["{{baseUrl}}"], "path": ["nav", "sync"] },
+            "description": "Fetches `https://portal.amfiindia.com/spages/NAVAll.txt`, upserts into `daily_nav` (key: amfi_code+nav_date)."
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"message\": \"Daily NAV sync completed\",\n  \"detail\": \"{'nav_date': '2026-05-06', 'records': 9521, 'inserted': 9521}\"\n}" }
+          ]
+        },
+        {
+          "name": "GET /nav/{amfi_code}/history — NAV time series",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/nav/{{amfiCode}}/history?from_date={{fromDate}}&to_date={{toDate}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["nav", "{{amfiCode}}", "history"],
+              "query": [
+                { "key": "from_date", "value": "{{fromDate}}", "description": "Required. YYYY-MM-DD." },
+                { "key": "to_date", "value": "{{toDate}}", "description": "Required. YYYY-MM-DD." }
+              ]
+            },
+            "description": "Reads from the `nav_price` VIEW (transparent union of daily_nav + historical_nav)."
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "[\n  {\n    \"id\": 1,\n    \"amfi_code\": \"100027\",\n    \"scheme_name\": \"Aditya Birla Sun Life Liquid Fund - Growth\",\n    \"nav\": 380.12,\n    \"nav_date\": \"2024-01-02\",\n    \"repurchase_price\": null,\n    \"sale_price\": null,\n    \"source_type\": \"DAILY\"\n  }\n]" }
+          ]
+        },
+        {
+          "name": "GET /nav/historical/batches — Historical import batches",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/nav/historical/batches?page=1&page_size=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["nav", "historical", "batches"],
+              "query": [{ "key": "page", "value": "1" }, { "key": "page_size", "value": "50" }]
+            }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"batch_name\": \"2024-Q4\",\n      \"source_filename\": \"https://portal.amfiindia.com/...\",\n      \"source_file_type\": \"TXT\",\n      \"status\": \"PROCESSED\",\n      \"total_rows\": 850000,\n      \"inserted_rows\": 845000,\n      \"created_at\": \"2026-05-06T16:00:00\"\n    }\n  ],\n  \"total\": 20,\n  \"page\": 1,\n  \"page_size\": 50,\n  \"total_pages\": 1\n}" }
+          ]
+        },
+        {
+          "name": "POST /nav/historical/fetch-date — Fetch single day",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/nav/historical/fetch-date", "host": ["{{baseUrl}}"], "path": ["nav", "historical", "fetch-date"] },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "target_date", "value": "{{toDate}}", "type": "text", "description": "YYYY-MM-DD (required, Form field)" }
+              ]
+            },
+            "description": "Synchronously fetches one historical NAV day from AMFI. Form-encoded (not query)."
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"message\": \"Historical NAV fetched\",\n  \"detail\": \"{'date': '31-Dec-2024', 'records': 9500, 'inserted': 9500}\"\n}" }
+          ]
+        },
+        {
+          "name": "POST /nav/historical/fetch-range — Fetch a date range",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/nav/historical/fetch-range?from_date={{fromDate}}&to_date={{toDate}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["nav", "historical", "fetch-range"],
+              "query": [
+                { "key": "from_date", "value": "{{fromDate}}", "description": "Required. YYYY-MM-DD." },
+                { "key": "to_date", "value": "{{toDate}}", "description": "Optional. Defaults to today." }
+              ]
+            },
+            "description": "Single AMFI call with frmdt+todt. Recommended ≤ 1 year per call (AMFI ~200MB cap)."
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"message\": \"Historical NAV range fetch completed\",\n  \"detail\": \"{'from_date': '01-Jan-2024', 'to_date': '31-Dec-2024', 'records': 850000, 'inserted': 845000}\"\n}" }
+          ]
+        },
+        {
+          "name": "POST /nav/historical/bulk-fetch-all — Seed years (background)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/nav/historical/bulk-fetch-all?from_year=2021&to_year=",
+              "host": ["{{baseUrl}}"],
+              "path": ["nav", "historical", "bulk-fetch-all"],
+              "query": [
+                { "key": "from_year", "value": "2021", "description": "Default 2021 (sufficient for 5Y returns)." },
+                { "key": "to_year", "value": "", "description": "Optional. Defaults to current year." }
+              ]
+            },
+            "description": "Returns immediately. Runs quarter-by-quarter in background, skips any quarter with > 500 rows already in `historical_nav`. Track progress at `GET /nav/historical/batches`."
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"message\": \"Bulk NAV history fetch started in background\",\n  \"detail\": \"Fetching 2021–present year by year. Check /nav/historical/batches for progress.\"\n}" }
+          ]
+        },
+        {
+          "name": "POST /nav/historical/fetch-from-url — Import from URL (background)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/nav/historical/fetch-from-url?url=https%3A//example.com/navfile.txt&batch_name=manual-import",
+              "host": ["{{baseUrl}}"],
+              "path": ["nav", "historical", "fetch-from-url"],
+              "query": [
+                { "key": "url", "value": "https://example.com/navfile.txt", "description": "Required. Direct URL to AMFI-format NAV text (S3 presigned, public link, etc.)." },
+                { "key": "batch_name", "value": "manual-import", "description": "Optional label." }
+              ]
+            },
+            "description": "Background download + import. Track at `GET /nav/historical/batches`."
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"message\": \"NAV fetch from URL started in background\",\n  \"detail\": \"Downloading from https://example.com/navfile.txt… Check /nav/historical/batches for status.\"\n}" }
+          ]
+        },
+        {
+          "name": "POST /nav/historical/upload — Upload AMFI text file",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/nav/historical/upload", "host": ["{{baseUrl}}"], "path": ["nav", "historical", "upload"] },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "file", "type": "file", "src": [], "description": "AMFI-format .txt file" },
+                { "key": "batch_name", "value": "manual-upload-2024", "type": "text" }
+              ]
+            }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"message\": \"Uploaded 850000 records, inserted 845000\",\n  \"detail\": null\n}" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "AUM",
+      "description": "Average AUM scheme-wise + fund-wise. AMFI fyId/periodId model (1..100 × 1..20).\n\n**Source:** `app/routers/aum.py`, `services/aum_service.py`.",
+      "item": [
+        {
+          "name": "GET /aum/scheme-wise — Scheme AUM",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/aum/scheme-wise?fy_id={{fyId}}&period_id={{periodId}}&amc_name=&category=&search=&page=1&page_size=100",
+              "host": ["{{baseUrl}}"],
+              "path": ["aum", "scheme-wise"],
+              "query": [
+                { "key": "fy_id", "value": "{{fyId}}" },
+                { "key": "period_id", "value": "{{periodId}}" },
+                { "key": "amc_name", "value": "" },
+                { "key": "category", "value": "" },
+                { "key": "search", "value": "" },
+                { "key": "page", "value": "1" },
+                { "key": "page_size", "value": "100", "description": "1..500" }
+              ]
+            }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"fy_id\": 1,\n      \"period_id\": 1,\n      \"fy_label\": \"FY 2024-25\",\n      \"period_label\": \"Apr-Jun 2024\",\n      \"amfi_code\": \"100027\",\n      \"scheme_name\": \"Aditya Birla Sun Life Liquid Fund - Growth\",\n      \"amc_name\": \"Aditya Birla Sun Life Mutual Fund\",\n      \"scheme_category\": \"Liquid Fund\",\n      \"average_aum_cr\": 12345.67,\n      \"folio_count\": 53210\n    }\n  ],\n  \"total\": 1234,\n  \"page\": 1,\n  \"page_size\": 100,\n  \"total_pages\": 13\n}" }
+          ]
+        },
+        {
+          "name": "GET /aum/fund-wise — AMC-level AUM",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/aum/fund-wise?fy_id={{fyId}}&period_id={{periodId}}&search=&page=1&page_size=100",
+              "host": ["{{baseUrl}}"],
+              "path": ["aum", "fund-wise"],
+              "query": [
+                { "key": "fy_id", "value": "{{fyId}}" },
+                { "key": "period_id", "value": "{{periodId}}" },
+                { "key": "search", "value": "" },
+                { "key": "page", "value": "1" },
+                { "key": "page_size", "value": "100" }
+              ]
+            }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"fy_id\": 1,\n      \"period_id\": 1,\n      \"amc_name\": \"HDFC Mutual Fund\",\n      \"total_aum_cr\": 612345.67,\n      \"equity_aum_cr\": 412345.67,\n      \"debt_aum_cr\": 100000.00,\n      \"hybrid_aum_cr\": 50000.00,\n      \"other_aum_cr\": 50000.00,\n      \"folio_count\": 1234567\n    }\n  ],\n  \"total\": 45,\n  \"page\": 1,\n  \"page_size\": 100,\n  \"total_pages\": 1\n}" }
+          ]
+        },
+        {
+          "name": "GET /aum/periods — Available fy_id / period_id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/aum/periods", "host": ["{{baseUrl}}"], "path": ["aum", "periods"] }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "[\n  { \"fy_id\": 1, \"period_id\": 1, \"fy_label\": \"FY 2024-25\", \"period_label\": \"Apr-Jun 2024\" },\n  { \"fy_id\": 1, \"period_id\": 2, \"fy_label\": \"FY 2024-25\", \"period_label\": \"Jul-Sep 2024\" }\n]" }
+          ]
+        },
+        {
+          "name": "GET /aum/sync-logs — Recent AUM sync runs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/aum/sync-logs?limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["aum", "sync-logs"],
+              "query": [{ "key": "limit", "value": "50", "description": "1..200" }]
+            }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "[\n  {\n    \"id\": 1,\n    \"data_type\": \"SCHEME_WISE\",\n    \"fy_id\": 1,\n    \"period_id\": 1,\n    \"status\": \"SUCCESS\",\n    \"records_fetched\": 1234,\n    \"records_upserted\": 1234,\n    \"message\": \"Apr-Jun 2024\",\n    \"created_at\": \"2026-05-06T15:32:00\"\n  }\n]" }
+          ]
+        },
+        {
+          "name": "POST /aum/sync/scheme-wise — Sync one period (scheme-wise)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/aum/sync/scheme-wise?fy_id={{fyId}}&period_id={{periodId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["aum", "sync", "scheme-wise"],
+              "query": [
+                { "key": "fy_id", "value": "{{fyId}}" },
+                { "key": "period_id", "value": "{{periodId}}" }
+              ]
+            },
+            "description": "Calls amfiindia.com/api/average-aum-schemewise. Idempotent (skips if already SUCCESS in `aum_sync_log`)."
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"message\": \"AUM scheme-wise sync completed\",\n  \"detail\": \"{'fy_id': 1, 'period_id': 1, 'records': 1234, 'upserted': 1234, 'period_label': 'Apr-Jun 2024'}\"\n}" }
+          ]
+        },
+        {
+          "name": "POST /aum/sync/fund-wise — Sync one period (fund-wise)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/aum/sync/fund-wise?fy_id={{fyId}}&period_id={{periodId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["aum", "sync", "fund-wise"],
+              "query": [
+                { "key": "fy_id", "value": "{{fyId}}" },
+                { "key": "period_id", "value": "{{periodId}}" }
+              ]
+            }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"message\": \"AUM fund-wise sync completed\",\n  \"detail\": \"{'fy_id': 1, 'period_id': 1, 'records': 45, 'upserted': 45, 'period_label': 'Apr-Jun 2024'}\"\n}" }
+          ]
+        },
+        {
+          "name": "POST /aum/sync/bulk — Bulk historical sync (long-running)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/aum/sync/bulk?data_type=BOTH",
+              "host": ["{{baseUrl}}"],
+              "path": ["aum", "sync", "bulk"],
+              "query": [
+                { "key": "data_type", "value": "BOTH", "description": "BOTH | SCHEME_WISE | FUND_WISE" }
+              ]
+            },
+            "description": "Iterates fyId 1..100 × periodId 1..20. Skips already-synced. Several minutes."
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"message\": \"AUM bulk sync completed\",\n  \"detail\": \"{'scheme_records_synced': 12345, 'fund_records_synced': 678, 'periods_skipped': 1500, 'periods_empty': 200, 'periods_failed': 5}\"\n}" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Analytics",
+      "description": "Pre-computed snapshots, returns calculators, top-performers, category comparison, goal calculators, direct-vs-regular comparison.\n\n**Source:** `app/routers/analytics.py`, `services/analytics_service.py`.",
+      "item": [
+        {
+          "name": "GET /analytics/snapshots — All scheme snapshots",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/snapshots?search=&amc_name=&category=&has_returns=false&page=1&page_size=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["analytics", "snapshots"],
+              "query": [
+                { "key": "search", "value": "" },
+                { "key": "amc_name", "value": "" },
+                { "key": "category", "value": "" },
+                { "key": "has_returns", "value": "false", "description": "true → only schemes with return_1y populated" },
+                { "key": "page", "value": "1" },
+                { "key": "page_size", "value": "50", "description": "1..500" }
+              ]
+            }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"amfi_code\": \"100027\",\n      \"scheme_name\": \"Aditya Birla Sun Life Liquid Fund - Growth\",\n      \"amc_name\": \"Aditya Birla Sun Life Mutual Fund\",\n      \"scheme_category\": \"Liquid Fund\",\n      \"latest_nav\": 401.23,\n      \"nav_date\": \"2026-05-05\",\n      \"return_1y\": 7.21,\n      \"return_3y\": 6.42,\n      \"return_5y\": 5.95,\n      \"sharpe_ratio\": 1.21,\n      \"max_drawdown\": 0.34,\n      \"category_rank\": 5,\n      \"category_count\": 42,\n      \"category_quartile\": 1,\n      \"snapshot_refreshed_at\": \"2026-05-06T01:00:00\"\n    }\n  ],\n  \"total\": 9876,\n  \"page\": 1,\n  \"page_size\": 50,\n  \"total_pages\": 198\n}" }
+          ]
+        },
+        {
+          "name": "GET /analytics/scheme/{amfi_code}/snapshot — One scheme snapshot",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/analytics/scheme/{{amfiCode}}/snapshot", "host": ["{{baseUrl}}"], "path": ["analytics", "scheme", "{{amfiCode}}", "snapshot"] },
+            "description": "Returns null (not 404) if no snapshot exists — frontend renders gracefully."
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"id\": 1,\n  \"amfi_code\": \"100027\",\n  \"scheme_name\": \"Aditya Birla Sun Life Liquid Fund - Growth\",\n  \"return_1y\": 7.21,\n  \"return_3y\": 6.42,\n  \"sharpe_ratio\": 1.21\n}" },
+            { "name": "200 (no snapshot)", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "null" }
+          ]
+        },
+        {
+          "name": "GET /analytics/scheme/{amfi_code}/returns — Returns + NAV history",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/scheme/{{amfiCode}}/returns?from_date={{fromDate}}&to_date={{toDate}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["analytics", "scheme", "{{amfiCode}}", "returns"],
+              "query": [
+                { "key": "from_date", "value": "{{fromDate}}", "description": "Optional. Defaults to today-365d." },
+                { "key": "to_date", "value": "{{toDate}}", "description": "Optional. Defaults to today." }
+              ]
+            }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"amfi_code\": \"100027\",\n  \"scheme_name\": \"Aditya Birla Sun Life Liquid Fund - Growth\",\n  \"nav_history\": [\n    { \"nav_date\": \"2024-01-02\", \"nav\": 380.12 },\n    { \"nav_date\": \"2024-01-03\", \"nav\": 380.45 }\n  ],\n  \"return_1w\": 0.13,\n  \"return_1m\": 0.62,\n  \"return_3m\": 1.81,\n  \"return_6m\": 3.55,\n  \"return_1y\": 7.21,\n  \"return_3y\": 6.42,\n  \"return_5y\": 5.95\n}" }
+          ]
+        },
+        {
+          "name": "GET /analytics/scheme/{amfi_code}/rolling-returns — Rolling stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/scheme/{{amfiCode}}/rolling-returns?period_years=1.0",
+              "host": ["{{baseUrl}}"],
+              "path": ["analytics", "scheme", "{{amfiCode}}", "rolling-returns"],
+              "query": [
+                { "key": "period_years", "value": "1.0", "description": "0.5 .. 10" }
+              ]
+            }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"period_years\": 1.0,\n  \"data_points\": 1234,\n  \"min\": -8.45,\n  \"max\": 28.12,\n  \"mean\": 11.42,\n  \"median\": 11.0,\n  \"positive_pct\": 92.5,\n  \"gt_8_pct\": 75.4,\n  \"gt_12_pct\": 51.2,\n  \"series\": [{ \"date\": \"2024-12-31\", \"return\": 12.3 }]\n}" }
+          ]
+        },
+        {
+          "name": "GET /analytics/scheme/{amfi_code}/calendar-returns — Per-year returns",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/analytics/scheme/{{amfiCode}}/calendar-returns", "host": ["{{baseUrl}}"], "path": ["analytics", "scheme", "{{amfiCode}}", "calendar-returns"] }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"amfi_code\": \"100027\",\n  \"years\": [\n    { \"year\": 2022, \"return\": 5.01 },\n    { \"year\": 2023, \"return\": 6.74 },\n    { \"year\": 2024, \"return\": 7.21 }\n  ]\n}" }
+          ]
+        },
+        {
+          "name": "GET /analytics/top-performers — Top N by period",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/top-performers?category=&period=return_1y&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["analytics", "top-performers"],
+              "query": [
+                { "key": "category", "value": "", "description": "Optional partial scheme_category." },
+                { "key": "period", "value": "return_1y", "description": "Must match ^return_(1w|1m|3m|6m|1y|3y|5y|10y)$" },
+                { "key": "limit", "value": "10", "description": "1..50" }
+              ]
+            }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "[\n  {\n    \"amfi_code\": \"120505\",\n    \"scheme_name\": \"Some Top Fund - Direct Growth\",\n    \"amc_name\": \"Some AMC\",\n    \"scheme_category\": \"Equity Scheme - Small Cap Fund\",\n    \"return_value\": 48.21,\n    \"latest_nav\": 145.67,\n    \"aum_cr\": 23456.78\n  }\n]" }
+          ]
+        },
+        {
+          "name": "POST /analytics/refresh-snapshots — Background refresh",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/analytics/refresh-snapshots", "host": ["{{baseUrl}}"], "path": ["analytics", "refresh-snapshots"] },
+            "description": "Returns immediately; runs `refresh_all_snapshots(db)` in BackgroundTasks. Iterates all active SchemeMaster, recomputes returns + risk + ranks."
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"status\": \"refresh started\",\n  \"message\": \"Snapshot refresh running in background\"\n}" }
+          ]
+        },
+        {
+          "name": "GET /analytics/summary — Dashboard counters",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/analytics/summary", "host": ["{{baseUrl}}"], "path": ["analytics", "summary"] }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"total_active_schemes\": 9876,\n  \"total_amcs\": 45,\n  \"latest_nav_date\": \"2026-05-05\",\n  \"total_industry_aum_cr\": 6123456.78,\n  \"schemes_with_nav\": 9700,\n  \"schemes_with_returns\": 8200,\n  \"data_status\": {\n    \"has_nav\": true,\n    \"has_returns\": true,\n    \"needs_history_sync\": false\n  }\n}" }
+          ]
+        },
+        {
+          "name": "GET /analytics/category/comparison — Peers in a category",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/category/comparison?category=Large Cap Fund&period=return_1y&page=1&page_size=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["analytics", "category", "comparison"],
+              "query": [
+                { "key": "category", "value": "Large Cap Fund", "description": "Required. Partial scheme_category." },
+                { "key": "period", "value": "return_1y", "description": "return_1w|1m|3m|6m|1y|3y|5y|10y" },
+                { "key": "page", "value": "1" },
+                { "key": "page_size", "value": "50", "description": "1..200" }
+              ]
+            }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"category\": \"Large Cap Fund\",\n  \"period\": \"return_1y\",\n  \"total\": 35,\n  \"category_avg\": 18.42,\n  \"category_max\": 32.18,\n  \"category_min\": 6.77,\n  \"page\": 1,\n  \"page_size\": 50,\n  \"items\": [\n    {\n      \"rank\": 1,\n      \"amfi_code\": \"100123\",\n      \"scheme_name\": \"Some Large Cap Fund - Direct\",\n      \"amc_name\": \"Some AMC\",\n      \"return_value\": 32.18,\n      \"return_1y\": 32.18,\n      \"return_3y\": 14.05,\n      \"return_5y\": 13.11,\n      \"aum_cr\": 23456.78,\n      \"expense_ratio\": 0.45,\n      \"sharpe_ratio\": 1.65,\n      \"max_drawdown\": 12.3,\n      \"category_quartile\": 1\n    }\n  ]\n}" }
+          ]
+        },
+        {
+          "name": "GET /analytics/compare/direct-regular — Direct vs Regular plan",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/compare/direct-regular?amfi_code={{amfiCode}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["analytics", "compare", "direct-regular"],
+              "query": [
+                { "key": "amfi_code", "value": "{{amfiCode}}", "description": "AMFI code of either plan." }
+              ]
+            }
+          },
+          "response": [
+            { "name": "200 OK (paired)", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"available\": true,\n  \"direct\": {\n    \"amfi_code\": \"100027\",\n    \"scheme_name\": \"... Direct Growth\",\n    \"plan_type\": \"Direct\",\n    \"expense_ratio\": 0.45,\n    \"return_1y\": 7.41,\n    \"latest_nav\": 401.23,\n    \"aum_cr\": 12000.0\n  },\n  \"regular\": {\n    \"amfi_code\": \"100028\",\n    \"scheme_name\": \"... Regular Growth\",\n    \"plan_type\": \"Regular\",\n    \"expense_ratio\": 1.25,\n    \"return_1y\": 6.78,\n    \"latest_nav\": 380.12,\n    \"aum_cr\": 25000.0\n  },\n  \"expense_gap\": 0.8,\n  \"return_gap_1y\": 0.63,\n  \"compounding_impact_10y_per_lakh\": 5821.34\n}" },
+            { "name": "200 (no partner)", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"available\": false,\n  \"reason\": \"No Regular plan found for this scheme\"\n}" },
+            { "name": "404 Not Found", "status": "Not Found", "code": 404, "_postman_previewlanguage": "json", "body": "{\n  \"detail\": \"Scheme not found\"\n}" }
+          ]
+        },
+        {
+          "name": "GET /analytics/goal/lumpsum — Lumpsum projection",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/goal/lumpsum?amount=100000&rate=12&years=10&inflation=6&tax_rate=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["analytics", "goal", "lumpsum"],
+              "query": [
+                { "key": "amount", "value": "100000", "description": "Initial investment ₹ (>0)" },
+                { "key": "rate", "value": "12", "description": "Annual return % (>0)" },
+                { "key": "years", "value": "10", "description": "Years (>0)" },
+                { "key": "inflation", "value": "6", "description": "Default 6%" },
+                { "key": "tax_rate", "value": "10", "description": "0..100, default 10%" }
+              ]
+            }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"initial_investment\": 100000,\n  \"annual_return_pct\": 12,\n  \"years\": 10,\n  \"future_value\": 310584.82,\n  \"total_gain\": 210584.82,\n  \"tax_on_gains\": 21058.48,\n  \"post_tax_value\": 289526.34,\n  \"inflation_adjusted_value\": 173436.59,\n  \"wealth_ratio\": 3.11\n}" }
+          ]
+        },
+        {
+          "name": "GET /analytics/goal/sip — SIP projection",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/goal/sip?monthly_amount=10000&rate=12&years=15&step_up=0",
+              "host": ["{{baseUrl}}"],
+              "path": ["analytics", "goal", "sip"],
+              "query": [
+                { "key": "monthly_amount", "value": "10000", "description": ">0" },
+                { "key": "rate", "value": "12" },
+                { "key": "years", "value": "15" },
+                { "key": "step_up", "value": "0", "description": "Annual SIP step-up % (default 0)" }
+              ]
+            }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"monthly_amount\": 10000,\n  \"annual_return_pct\": 12,\n  \"years\": 15,\n  \"step_up_pct\": 0,\n  \"total_invested\": 1800000,\n  \"future_value\": 5045865.86,\n  \"total_gain\": 3245865.86,\n  \"wealth_ratio\": 2.8\n}" }
+          ]
+        },
+        {
+          "name": "GET /analytics/goal/retirement — Retirement corpus",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/goal/retirement?current_age=30&retirement_age=60&monthly_expense=50000&corpus_years=25&expected_return=12&post_return=8&inflation=6",
+              "host": ["{{baseUrl}}"],
+              "path": ["analytics", "goal", "retirement"],
+              "query": [
+                { "key": "current_age", "value": "30", "description": "18..80" },
+                { "key": "retirement_age", "value": "60", "description": "30..85" },
+                { "key": "monthly_expense", "value": "50000" },
+                { "key": "corpus_years", "value": "25", "description": "5..50" },
+                { "key": "expected_return", "value": "12" },
+                { "key": "post_return", "value": "8" },
+                { "key": "inflation", "value": "6" }
+              ]
+            }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"current_age\": 30,\n  \"retirement_age\": 60,\n  \"years_to_retire\": 30,\n  \"current_monthly_expense\": 50000,\n  \"future_monthly_expense_at_retirement\": 287174.59,\n  \"corpus_needed\": 73142918.45,\n  \"monthly_sip_needed\": 21034.53,\n  \"corpus_lasts_years\": 25\n}" },
+            { "name": "422 Bad inputs", "status": "Unprocessable Entity", "code": 422, "_postman_previewlanguage": "json", "body": "{\n  \"detail\": \"retirement_age must be greater than current_age\"\n}" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Tracking",
+      "description": "Tracking Error (TE) and Tracking Difference (TD) sourced from AMFI JSON APIs.\n\n**Source:** `app/routers/tracking.py`, `services/tracking_service.py`.",
+      "item": [
+        {
+          "name": "GET /tracking/error — TE list",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tracking/error?amfi_code=&amc_name=&period_type=&as_of_date=&page=1&page_size=100",
+              "host": ["{{baseUrl}}"],
+              "path": ["tracking", "error"],
+              "query": [
+                { "key": "amfi_code", "value": "" },
+                { "key": "amc_name", "value": "" },
+                { "key": "period_type", "value": "", "description": "e.g. '1Y'" },
+                { "key": "as_of_date", "value": "", "description": "YYYY-MM-DD" },
+                { "key": "page", "value": "1" },
+                { "key": "page_size", "value": "100" }
+              ]
+            }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"amfi_code\": \"100027\",\n      \"scheme_name\": \"...\",\n      \"amc_name\": \"...\",\n      \"benchmark_name\": \"NIFTY 50 TRI\",\n      \"tracking_error\": 0.45,\n      \"period_type\": \"1Y\",\n      \"as_of_date\": \"2025-04-01\"\n    }\n  ],\n  \"total\": 234,\n  \"page\": 1,\n  \"page_size\": 100,\n  \"total_pages\": 3\n}" }
+          ]
+        },
+        {
+          "name": "GET /tracking/difference — TD list",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tracking/difference?amfi_code=&amc_name=&report_month=&page=1&page_size=100",
+              "host": ["{{baseUrl}}"],
+              "path": ["tracking", "difference"],
+              "query": [
+                { "key": "amfi_code", "value": "" },
+                { "key": "amc_name", "value": "" },
+                { "key": "report_month", "value": "", "description": "YYYY-MM-DD (typically first of month)" },
+                { "key": "page", "value": "1" },
+                { "key": "page_size", "value": "100" }
+              ]
+            }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"amfi_code\": \"100027\",\n      \"scheme_name\": \"...\",\n      \"amc_name\": \"...\",\n      \"benchmark_name\": \"NIFTY 50 TRI\",\n      \"tracking_difference\": -0.12,\n      \"report_month\": \"2025-04-01\"\n    }\n  ],\n  \"total\": 234,\n  \"page\": 1,\n  \"page_size\": 100,\n  \"total_pages\": 3\n}" }
+          ]
+        },
+        {
+          "name": "GET /tracking/{amfi_code}/error-history — TE history per scheme",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/tracking/{{amfiCode}}/error-history", "host": ["{{baseUrl}}"], "path": ["tracking", "{{amfiCode}}", "error-history"] }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "[\n  { \"id\": 1, \"amfi_code\": \"100027\", \"period_type\": \"1Y\", \"tracking_error\": 0.45, \"as_of_date\": \"2025-04-01\" }\n]" }
+          ]
+        },
+        {
+          "name": "GET /tracking/{amfi_code}/difference-history — TD history per scheme",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/tracking/{{amfiCode}}/difference-history", "host": ["{{baseUrl}}"], "path": ["tracking", "{{amfiCode}}", "difference-history"] }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "[\n  { \"id\": 1, \"amfi_code\": \"100027\", \"tracking_difference\": -0.12, \"report_month\": \"2025-04-01\" }\n]" }
+          ]
+        },
+        {
+          "name": "GET /tracking/sync-logs — Recent sync logs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tracking/sync-logs?limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["tracking", "sync-logs"],
+              "query": [{ "key": "limit", "value": "50" }]
+            }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "[\n  { \"id\": 1, \"data_type\": \"TRACKING_ERROR\", \"status\": \"SUCCESS\", \"records_fetched\": 234, \"records_upserted\": 234, \"as_of_date\": \"2025-04-01\" }\n]" }
+          ]
+        },
+        {
+          "name": "POST /tracking/sync/error — Sync TE",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tracking/sync/error?as_of_date={{asOfDate}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["tracking", "sync", "error"],
+              "query": [
+                { "key": "as_of_date", "value": "{{asOfDate}}", "description": "Optional. Defaults to first of current month." }
+              ]
+            }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"message\": \"Tracking error sync completed\",\n  \"detail\": \"{'as_of_date': '2025-04-01', 'records': 234, 'upserted': 234}\"\n}" }
+          ]
+        },
+        {
+          "name": "POST /tracking/sync/difference — Sync TD",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tracking/sync/difference?report_month={{asOfDate}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["tracking", "sync", "difference"],
+              "query": [
+                { "key": "report_month", "value": "{{asOfDate}}", "description": "Optional. Defaults to first of current month." }
+              ]
+            }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"message\": \"Tracking difference sync completed\",\n  \"detail\": \"{'report_month': '2025-04-01', 'records': 234, 'upserted': 234}\"\n}" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Disclosure",
+      "description": "Excel uploads for AMFI Monthly Disclosure, Sub-Classification, Quarterly Disclosure.\n\n**Source:** `app/routers/disclosure.py`, `services/disclosure_service.py`.",
+      "item": [
+        {
+          "name": "POST /disclosure/monthly/upload — Upload monthly disclosure",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/disclosure/monthly/upload", "host": ["{{baseUrl}}"], "path": ["disclosure", "monthly", "upload"] },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "file", "type": "file", "src": [], "description": ".xlsx file" },
+                { "key": "report_month", "value": "{{reportMonthDate}}", "type": "text", "description": "YYYY-MM-DD (Form field)" }
+              ]
+            }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"message\": \"Monthly disclosure uploaded\",\n  \"detail\": \"{'upload_id': 1, 'inserted': 9500}\"\n}" }
+          ]
+        },
+        {
+          "name": "GET /disclosure/monthly/uploads — List uploads",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/disclosure/monthly/uploads?page=1&page_size=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["disclosure", "monthly", "uploads"],
+              "query": [{ "key": "page", "value": "1" }, { "key": "page_size", "value": "50" }]
+            }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"items\": [\n    { \"id\": 1, \"report_month\": \"2025-06-01\", \"source_filename\": \"./uploads/x.xlsx\", \"status\": \"PROCESSED\", \"total_rows\": 9500 }\n  ],\n  \"total\": 12\n}" }
+          ]
+        },
+        {
+          "name": "GET /disclosure/monthly/rows — Disclosure rows",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/disclosure/monthly/rows?upload_id=&amfi_code=&amc_name=&report_month=&page=1&page_size=100",
+              "host": ["{{baseUrl}}"],
+              "path": ["disclosure", "monthly", "rows"],
+              "query": [
+                { "key": "upload_id", "value": "" },
+                { "key": "amfi_code", "value": "" },
+                { "key": "amc_name", "value": "" },
+                { "key": "report_month", "value": "", "description": "YYYY-MM-DD" },
+                { "key": "page", "value": "1" },
+                { "key": "page_size", "value": "100" }
+              ]
+            }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"items\": [\n    { \"id\": 1, \"amfi_code\": \"100027\", \"scheme_name\": \"...\", \"amc_name\": \"...\", \"aum_cr\": \"12345.67\", \"expense_ratio\": \"0.45\", \"report_month\": \"2025-06-01\" }\n  ],\n  \"total\": 9500\n}" }
+          ]
+        },
+        {
+          "name": "POST /disclosure/sub-classification/upload — Upload sub-classification",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/disclosure/sub-classification/upload", "host": ["{{baseUrl}}"], "path": ["disclosure", "sub-classification", "upload"] },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "file", "type": "file", "src": [] },
+                { "key": "report_month", "value": "{{reportMonthDate}}", "type": "text" }
+              ]
+            }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"message\": \"Sub-classification uploaded\",\n  \"detail\": \"{'upload_id': 1, 'inserted': 1234}\"\n}" }
+          ]
+        },
+        {
+          "name": "GET /disclosure/sub-classification/rows — Sub-classification rows",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/disclosure/sub-classification/rows?upload_id=&amfi_code=&report_month=&page=1&page_size=100",
+              "host": ["{{baseUrl}}"],
+              "path": ["disclosure", "sub-classification", "rows"],
+              "query": [
+                { "key": "upload_id", "value": "" },
+                { "key": "amfi_code", "value": "" },
+                { "key": "report_month", "value": "" },
+                { "key": "page", "value": "1" },
+                { "key": "page_size", "value": "100" }
+              ]
+            }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"items\": [\n    { \"id\": 1, \"amfi_code\": \"100027\", \"scheme_name\": \"...\", \"scheme_category\": \"Equity Scheme - Large Cap Fund\", \"sub_classification\": \"...\" }\n  ],\n  \"total\": 1234\n}" }
+          ]
+        },
+        {
+          "name": "POST /disclosure/quarterly/upload — Upload quarterly disclosure",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/disclosure/quarterly/upload", "host": ["{{baseUrl}}"], "path": ["disclosure", "quarterly", "upload"] },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "file", "type": "file", "src": [] },
+                { "key": "report_quarter", "value": "{{reportMonthDate}}", "type": "text", "description": "YYYY-MM-DD (typically quarter-end date)" }
+              ]
+            }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"message\": \"Quarterly disclosure uploaded\",\n  \"detail\": \"{'upload_id': 1, 'inserted': 9500}\"\n}" }
+          ]
+        },
+        {
+          "name": "GET /disclosure/quarterly/rows — Quarterly rows",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/disclosure/quarterly/rows?upload_id=&amfi_code=&report_quarter=&page=1&page_size=100",
+              "host": ["{{baseUrl}}"],
+              "path": ["disclosure", "quarterly", "rows"],
+              "query": [
+                { "key": "upload_id", "value": "" },
+                { "key": "amfi_code", "value": "" },
+                { "key": "report_quarter", "value": "" },
+                { "key": "page", "value": "1" },
+                { "key": "page_size", "value": "100" }
+              ]
+            }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"items\": [\n    { \"id\": 1, \"amfi_code\": \"100027\", \"scheme_name\": \"...\", \"beta\": \"0.95\", \"sharpe_ratio\": \"1.21\", \"std_deviation\": \"15.42\" }\n  ],\n  \"total\": 9500\n}" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Market Cap",
+      "description": "AMFI Market Cap Categorization Excel ingestion + lookups.\n\n**Source:** `app/routers/market_cap.py`, `services/market_cap_service.py`.",
+      "item": [
+        {
+          "name": "POST /market-cap/upload — Upload categorization Excel",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/market-cap/upload", "host": ["{{baseUrl}}"], "path": ["market-cap", "upload"] },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "file", "type": "file", "src": [], "description": "AMFI .xlsx" },
+                { "key": "effective_date", "value": "", "type": "text", "description": "Optional override YYYY-MM-DD. Auto-parsed from title row otherwise." }
+              ]
+            }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"message\": \"Processed 1000 companies for 2025-06-30 — Large Cap: 100, Mid Cap: 150, Small Cap: 750\",\n  \"detail\": \"{'inserted': 1000, 'effective_date': '2025-06-30', 'large_cap': 100, 'mid_cap': 150, 'small_cap': 750}\"\n}" },
+            { "name": "422 Bad date", "status": "Unprocessable Entity", "code": 422, "_postman_previewlanguage": "json", "body": "{\n  \"detail\": \"Invalid effective_date format: 'XYZ'. Use YYYY-MM-DD.\"\n}" }
+          ]
+        },
+        {
+          "name": "GET /market-cap/uploads — List uploads",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/market-cap/uploads?page=1&page_size=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["market-cap", "uploads"],
+              "query": [{ "key": "page", "value": "1" }, { "key": "page_size", "value": "50" }]
+            }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"items\": [\n    { \"id\": 1, \"effective_date\": \"2025-06-30\", \"title\": \"... 30 June 2025\", \"source_filename\": \"./uploads/x.xlsx\", \"status\": \"PROCESSED\", \"total_rows\": 1000, \"created_at\": \"2026-05-06T16:00:00\" }\n  ],\n  \"total\": 12\n}" }
+          ]
+        },
+        {
+          "name": "GET /market-cap/rows — Filter rows",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/market-cap/rows?upload_id=&isin=&bucket=&effective_date=&search=&page=1&page_size=100",
+              "host": ["{{baseUrl}}"],
+              "path": ["market-cap", "rows"],
+              "query": [
+                { "key": "upload_id", "value": "" },
+                { "key": "isin", "value": "" },
+                { "key": "bucket", "value": "", "description": "Large Cap | Mid Cap | Small Cap" },
+                { "key": "effective_date", "value": "", "description": "YYYY-MM-DD" },
+                { "key": "search", "value": "" },
+                { "key": "page", "value": "1" },
+                { "key": "page_size", "value": "100" }
+              ]
+            }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"items\": [\n    { \"id\": 1, \"rank_number\": 1, \"company_name\": \"Reliance Industries\", \"isin\": \"INE002A01018\", \"bse_symbol\": \"RELIANCE\", \"nse_symbol\": \"RELIANCE\", \"avg_market_cap_cr\": 1850000.0, \"market_cap_bucket\": \"Large Cap\", \"effective_date\": \"2025-06-30\" }\n  ],\n  \"total\": 1000\n}" }
+          ]
+        },
+        {
+          "name": "GET /market-cap/latest — Latest snapshot",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/market-cap/latest?bucket=&search=&page=1&page_size=100",
+              "host": ["{{baseUrl}}"],
+              "path": ["market-cap", "latest"],
+              "query": [
+                { "key": "bucket", "value": "" },
+                { "key": "search", "value": "" },
+                { "key": "page", "value": "1" },
+                { "key": "page_size", "value": "100" }
+              ]
+            }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"effective_date\": \"2025-06-30\",\n  \"total\": 1000,\n  \"items\": [\n    { \"id\": 1, \"rank_number\": 1, \"company_name\": \"Reliance Industries\", \"isin\": \"INE002A01018\", \"avg_market_cap_cr\": 1850000.0, \"market_cap_bucket\": \"Large Cap\" }\n  ]\n}" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Portfolio",
+      "description": "Holdings ingestion (CSV/Excel), holdings analytics, sector breakdown, overlap, HHI concentration.\n\n**Source:** `app/routers/portfolio.py`, `services/portfolio_service.py`.",
+      "item": [
+        {
+          "name": "POST /portfolio/upload — Upload holdings",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/portfolio/upload", "host": ["{{baseUrl}}"], "path": ["portfolio", "upload"] },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "file", "type": "file", "src": [], "description": "CSV or Excel" },
+                { "key": "report_month", "value": "{{reportMonth}}", "type": "text", "description": "YYYY-MM (regex-validated). DELETES existing rows for the same month before reinsert (idempotent)." }
+              ]
+            }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"message\": \"Loaded 50000 holdings for 2025-06 across 1234 schemes\",\n  \"detail\": \"{'upload_id': 1, 'report_month': '2025-06', 'inserted': 50000, 'unique_schemes': 1234}\"\n}" },
+            { "name": "422 Bad month", "status": "Unprocessable Entity", "code": 422, "_postman_previewlanguage": "json", "body": "{\n  \"detail\": \"report_month must be YYYY-MM\"\n}" }
+          ]
+        },
+        {
+          "name": "GET /portfolio/uploads — List uploads",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/portfolio/uploads", "host": ["{{baseUrl}}"], "path": ["portfolio", "uploads"] }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"items\": [\n    { \"id\": 1, \"report_month\": \"2025-06\", \"source_filename\": \"./uploads/x.csv\", \"status\": \"PROCESSED\", \"total_rows\": 50000, \"created_at\": \"2026-05-06T16:00:00\" }\n  ]\n}" }
+          ]
+        },
+        {
+          "name": "GET /portfolio/months — Distinct months",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/portfolio/months", "host": ["{{baseUrl}}"], "path": ["portfolio", "months"] }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"months\": [\"2025-06\", \"2025-05\", \"2025-04\"]\n}" }
+          ]
+        },
+        {
+          "name": "GET /portfolio/holdings — Filter holdings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/portfolio/holdings?amfi_code={{amfiCode}}&report_month={{reportMonth}}&sector=&search=&security_class=&page=1&page_size=100",
+              "host": ["{{baseUrl}}"],
+              "path": ["portfolio", "holdings"],
+              "query": [
+                { "key": "amfi_code", "value": "{{amfiCode}}" },
+                { "key": "report_month", "value": "{{reportMonth}}", "description": "Optional; latest used if omitted." },
+                { "key": "sector", "value": "" },
+                { "key": "search", "value": "" },
+                { "key": "security_class", "value": "", "description": "EQUITY|DEBT|GOV_SEC|T-BILL|OTHERS" },
+                { "key": "page", "value": "1" },
+                { "key": "page_size", "value": "100" }
+              ]
+            }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"report_month\": \"2025-06\",\n  \"total\": 75,\n  \"items\": [\n    { \"id\": 1, \"amfi_code\": \"100027\", \"company_name\": \"Reliance Industries\", \"company_isin\": \"INE002A01018\", \"sector\": \"Energy\", \"market_value_cr\": 250.5, \"percentage_exposure\": 5.21, \"security_class\": \"EQUITY\" }\n  ]\n}" }
+          ]
+        },
+        {
+          "name": "GET /portfolio/top-holdings/{amfi_code} — Top holdings + sectors",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/portfolio/top-holdings/{{amfiCode}}?report_month=&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["portfolio", "top-holdings", "{{amfiCode}}"],
+              "query": [
+                { "key": "report_month", "value": "" },
+                { "key": "limit", "value": "10", "description": "1..50" }
+              ]
+            }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"report_month\": \"2025-06\",\n  \"top_holdings\": [\n    { \"id\": 1, \"company_name\": \"Reliance Industries\", \"percentage_exposure\": 5.21 }\n  ],\n  \"top_sectors\": [\n    { \"sector\": \"Financial Services\", \"percentage\": 28.5 },\n    { \"sector\": \"Information Technology\", \"percentage\": 17.2 }\n  ],\n  \"avg_maturity_years\": null,\n  \"modified_duration\": null\n}" }
+          ]
+        },
+        {
+          "name": "GET /portfolio/sectors — Distinct sectors",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/portfolio/sectors?report_month={{reportMonth}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["portfolio", "sectors"],
+              "query": [{ "key": "report_month", "value": "{{reportMonth}}" }]
+            }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"sectors\": [\"Banking\", \"Energy\", \"Financial Services\", \"Information Technology\"]\n}" }
+          ]
+        },
+        {
+          "name": "GET /portfolio/overlap — Two-scheme overlap",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/portfolio/overlap?amfi_code_1={{amfiCode}}&amfi_code_2=100123&report_month={{reportMonth}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["portfolio", "overlap"],
+              "query": [
+                { "key": "amfi_code_1", "value": "{{amfiCode}}" },
+                { "key": "amfi_code_2", "value": "100123" },
+                { "key": "report_month", "value": "{{reportMonth}}" }
+              ]
+            }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"report_month\": \"2025-06\",\n  \"scheme_1\": \"100027\",\n  \"scheme_2\": \"100123\",\n  \"common_stocks\": 35,\n  \"overlap_percentage\": 47.21,\n  \"common_holdings\": [\n    { \"company_isin\": \"INE002A01018\", \"company_name\": \"Reliance Industries\", \"scheme_1_weight\": 5.2, \"scheme_2_weight\": 4.8 }\n  ]\n}" }
+          ]
+        },
+        {
+          "name": "GET /portfolio/concentration/{amfi_code} — HHI + top weights",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/portfolio/concentration/{{amfiCode}}?report_month={{reportMonth}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["portfolio", "concentration", "{{amfiCode}}"],
+              "query": [{ "key": "report_month", "value": "{{reportMonth}}" }]
+            }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"report_month\": \"2025-06\",\n  \"total_holdings\": 75,\n  \"top5_weight\": 23.5,\n  \"top10_weight\": 41.2,\n  \"hhi\": 412.45,\n  \"hhi_normalized\": 0.041245,\n  \"top10\": [{ \"rank\": 1, \"company_name\": \"Reliance Industries\", \"sector\": \"Energy\", \"percentage_exposure\": 5.21, \"market_value_cr\": 250.5 }]\n}" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Dividends",
+      "description": "IDCW / Bonus / Special dividend history.\n\n**Source:** `app/routers/dividend.py`, parser `parsers/dividend_parser.py`.",
+      "item": [
+        {
+          "name": "POST /dividends/upload — Upload dividend CSV",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/dividends/upload", "host": ["{{baseUrl}}"], "path": ["dividends", "upload"] },
+            "body": {
+              "mode": "formdata",
+              "formdata": [{ "key": "file", "type": "file", "src": [], "description": "CSV" }]
+            }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"message\": \"Inserted 1234 dividend records\",\n  \"detail\": null\n}" },
+            { "name": "422 Bad CSV", "status": "Unprocessable Entity", "code": 422, "_postman_previewlanguage": "json", "body": "{\n  \"detail\": \"CSV format error: missing required column 'record_date'\"\n}" }
+          ]
+        },
+        {
+          "name": "GET /dividends/{amfi_code} — Per-scheme dividends",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/dividends/{{amfiCode}}?dividend_type=&from_date=&to_date=&page=1&page_size=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["dividends", "{{amfiCode}}"],
+              "query": [
+                { "key": "dividend_type", "value": "", "description": "IDCW | Bonus | Special" },
+                { "key": "from_date", "value": "", "description": "YYYY-MM-DD" },
+                { "key": "to_date", "value": "" },
+                { "key": "page", "value": "1" },
+                { "key": "page_size", "value": "50" }
+              ]
+            }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"amfi_code\": \"100027\",\n  \"total\": 24,\n  \"items\": [\n    { \"id\": 1, \"record_date\": \"2025-03-15\", \"ex_dividend_date\": \"2025-03-14\", \"reinvestment_date\": \"2025-03-16\", \"dividend_per_unit\": 0.5, \"nav_on_record_date\": 25.42, \"dividend_yield\": 1.97, \"dividend_type\": \"IDCW\" }\n  ]\n}" }
+          ]
+        },
+        {
+          "name": "GET /dividends/{amfi_code}/summary — Cumulative summary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/dividends/{{amfiCode}}/summary", "host": ["{{baseUrl}}"], "path": ["dividends", "{{amfiCode}}", "summary"] }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"amfi_code\": \"100027\",\n  \"total_dividends_declared\": 24,\n  \"latest_record_date\": \"2025-03-15\",\n  \"latest_dividend_per_unit\": 0.5,\n  \"cumulative_1y\": 2.1,\n  \"cumulative_3y\": 5.8,\n  \"cumulative_5y\": 9.4\n}" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "NPS / APY",
+      "description": "NPS Trust pension data: 10 PFMs × ~252 schemes. ZIP NAV ingestion + analytics snapshots.\n\n**Source:** `app/routers/nps.py`, `services/nps_service.py`, `services/nps_analytics_service.py`, `parsers/nps_parser.py`.",
+      "item": [
+        {
+          "name": "POST /nps/upload — Single ZIP upload",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/nps/upload", "host": ["{{baseUrl}}"], "path": ["nps", "upload"] },
+            "body": {
+              "mode": "formdata",
+              "formdata": [{ "key": "file", "type": "file", "src": [], "description": "NAV_File_DDMMYYYY.zip from NPS Trust" }]
+            }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"filename\": \"NAV_File_05052026.zip\",\n  \"nav_date\": \"2026-05-05\",\n  \"records\": 252,\n  \"inserted\": 252\n}" },
+            { "name": "400 Bad ZIP", "status": "Bad Request", "code": 400, "_postman_previewlanguage": "json", "body": "{\n  \"detail\": \"Invalid ZIP: no .out file found inside\"\n}" }
+          ]
+        },
+        {
+          "name": "POST /nps/upload/bulk — Multi-ZIP upload",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/nps/upload/bulk", "host": ["{{baseUrl}}"], "path": ["nps", "upload", "bulk"] },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "files", "type": "file", "src": [], "description": "Repeat with multiple files; each error is per-file." },
+                { "key": "files", "type": "file", "src": [] }
+              ]
+            }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "[\n  { \"filename\": \"NAV_File_05052026.zip\", \"records\": 252, \"inserted\": 252 },\n  { \"filename\": \"NAV_File_06052026.zip\", \"records\": 252, \"inserted\": 252 }\n]" }
+          ]
+        },
+        {
+          "name": "GET /nps/pfms — Pension Fund Managers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/nps/pfms", "host": ["{{baseUrl}}"], "path": ["nps", "pfms"] }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "[\n  { \"pfm_code\": \"PFM001\", \"pfm_name\": \"SBI Pension Funds Pvt. Ltd.\" },\n  { \"pfm_code\": \"PFM002\", \"pfm_name\": \"LIC Pension Fund Ltd.\" }\n]" }
+          ]
+        },
+        {
+          "name": "GET /nps/schemes — Filter NPS schemes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/nps/schemes?pfm_code={{pfmCode}}&asset_class=&tier=&category=&is_apy=",
+              "host": ["{{baseUrl}}"],
+              "path": ["nps", "schemes"],
+              "query": [
+                { "key": "pfm_code", "value": "{{pfmCode}}" },
+                { "key": "asset_class", "value": "", "description": "E | C | G | A" },
+                { "key": "tier", "value": "", "description": "I | II" },
+                { "key": "category", "value": "", "description": "NPS | APY | CENTRAL_GOVT | STATE_GOVT | NPS_LITE | CORPORATE_CG | UPS | TAX_SAVER | COMPOSITE | VATSALYA | RETIREMENT_YOJANA | APY_FUND" },
+                { "key": "is_apy", "value": "", "description": "true | false" }
+              ]
+            }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "[\n  { \"scheme_code\": \"SM001001\", \"pfm_code\": \"PFM001\", \"scheme_name\": \"SBI - Tier I - Equity\", \"asset_class\": \"E\", \"tier\": \"I\", \"variant\": \"POP\", \"category\": \"NPS\", \"is_apy\": 0, \"is_active\": 1 }\n]" }
+          ]
+        },
+        {
+          "name": "GET /nps/schemes/{scheme_code} — Scheme detail",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/nps/schemes/{{npsSchemeCode}}", "host": ["{{baseUrl}}"], "path": ["nps", "schemes", "{{npsSchemeCode}}"] }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"scheme_code\": \"SM001001\",\n  \"pfm_code\": \"PFM001\",\n  \"scheme_name\": \"SBI - Tier I - Equity\",\n  \"asset_class\": \"E\",\n  \"tier\": \"I\",\n  \"variant\": \"POP\",\n  \"category\": \"NPS\",\n  \"is_apy\": 0,\n  \"is_active\": 1\n}" },
+            { "name": "404 Not Found", "status": "Not Found", "code": 404, "_postman_previewlanguage": "json", "body": "{\n  \"detail\": \"Scheme SM999999 not found\"\n}" }
+          ]
+        },
+        {
+          "name": "GET /nps/nav/{scheme_code}/history — NAV time series",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/nps/nav/{{npsSchemeCode}}/history?from_date=&to_date=",
+              "host": ["{{baseUrl}}"],
+              "path": ["nps", "nav", "{{npsSchemeCode}}", "history"],
+              "query": [
+                { "key": "from_date", "value": "", "description": "Optional. Default = today-365d." },
+                { "key": "to_date", "value": "", "description": "Optional. Default = today." }
+              ]
+            }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "[\n  { \"scheme_code\": \"SM001001\", \"nav_date\": \"2025-05-01\", \"nav\": 50.0124 }\n]" },
+            { "name": "404 Not Found", "status": "Not Found", "code": 404, "_postman_previewlanguage": "json", "body": "{\n  \"detail\": \"Scheme SM999999 not found\"\n}" }
+          ]
+        },
+        {
+          "name": "GET /nps/analytics/snapshots — All NPS analytics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/nps/analytics/snapshots?pfm_code=&asset_class=&tier=&category=&is_apy=&page=1&page_size=1000",
+              "host": ["{{baseUrl}}"],
+              "path": ["nps", "analytics", "snapshots"],
+              "query": [
+                { "key": "pfm_code", "value": "" },
+                { "key": "asset_class", "value": "", "description": "E | C | G | A | NA" },
+                { "key": "tier", "value": "", "description": "I | II | NA" },
+                { "key": "category", "value": "" },
+                { "key": "is_apy", "value": "" },
+                { "key": "page", "value": "1" },
+                { "key": "page_size", "value": "1000", "description": "1..2000" }
+              ]
+            }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "[\n  { \"scheme_code\": \"SM001001\", \"pfm_code\": \"PFM001\", \"scheme_name\": \"SBI - Tier I - Equity\", \"asset_class\": \"E\", \"latest_nav\": 50.0124, \"return_1y\": 12.45, \"sharpe_ratio\": 1.31, \"category_rank\": 3, \"category_quartile\": 1 }\n]" }
+          ]
+        },
+        {
+          "name": "GET /nps/analytics/{scheme_code} — One snapshot",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/nps/analytics/{{npsSchemeCode}}", "host": ["{{baseUrl}}"], "path": ["nps", "analytics", "{{npsSchemeCode}}"] }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"scheme_code\": \"SM001001\",\n  \"latest_nav\": 50.0124,\n  \"return_1y\": 12.45,\n  \"sharpe_ratio\": 1.31\n}" },
+            { "name": "404 Not Found", "status": "Not Found", "code": 404, "_postman_previewlanguage": "json", "body": "{\n  \"detail\": \"No snapshot for SM999999. Run /nps/analytics/refresh first.\"\n}" }
+          ]
+        },
+        {
+          "name": "POST /nps/analytics/refresh — Refresh ALL NPS",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/nps/analytics/refresh", "host": ["{{baseUrl}}"], "path": ["nps", "analytics", "refresh"] },
+            "description": "Synchronous (~30-60s for 252 schemes)."
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"refreshed\": 252\n}" }
+          ]
+        },
+        {
+          "name": "POST /nps/analytics/refresh/{scheme_code} — Refresh one",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/nps/analytics/refresh/{{npsSchemeCode}}", "host": ["{{baseUrl}}"], "path": ["nps", "analytics", "refresh", "{{npsSchemeCode}}"] }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"scheme_code\": \"SM001001\",\n  \"latest_nav\": 50.0124,\n  \"return_1y\": 12.45,\n  \"snapshot_refreshed_at\": \"2026-05-08T01:00:00\"\n}" },
+            { "name": "404 Not Found", "status": "Not Found", "code": 404, "_postman_previewlanguage": "json", "body": "{\n  \"detail\": \"Scheme SM999999 not found\"\n}" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "description": "Observability: file logs, rejected rows, background jobs, reconciliation issues.\n\n**Source:** `app/routers/admin.py`.",
+      "item": [
+        {
+          "name": "GET /admin/file-logs — File ingestion logs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/file-logs?module_name=&status=&limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "file-logs"],
+              "query": [
+                { "key": "module_name", "value": "" },
+                { "key": "status", "value": "" },
+                { "key": "limit", "value": "50", "description": "1..200" }
+              ]
+            }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "[\n  { \"id\": 1, \"module_name\": \"market_cap\", \"source_filename\": \"x.xlsx\", \"status\": \"PROCESSED\", \"row_count_total\": 1000, \"row_count_inserted\": 1000, \"created_at\": \"2026-05-06T16:00:00\" }\n]" }
+          ]
+        },
+        {
+          "name": "GET /admin/file-logs/{log_id} — One file log",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/admin/file-logs/{{fileLogId}}", "host": ["{{baseUrl}}"], "path": ["admin", "file-logs", "{{fileLogId}}"] }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"id\": 1,\n  \"module_name\": \"market_cap\",\n  \"status\": \"PROCESSED\",\n  \"row_count_total\": 1000\n}" },
+            { "name": "404 Not Found", "status": "Not Found", "code": 404, "_postman_previewlanguage": "json", "body": "{\n  \"detail\": \"Log not found\"\n}" }
+          ]
+        },
+        {
+          "name": "GET /admin/rejected-rows — Rejected row log",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/rejected-rows?module_name=&file_log_id=&limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "rejected-rows"],
+              "query": [
+                { "key": "module_name", "value": "" },
+                { "key": "file_log_id", "value": "" },
+                { "key": "limit", "value": "50" }
+              ]
+            }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "[\n  { \"id\": 1, \"module_name\": \"portfolio\", \"rejection_reason\": \"missing amfi_code\", \"created_at\": \"2026-05-06T16:00:00\" }\n]" }
+          ]
+        },
+        {
+          "name": "GET /admin/jobs — Background jobs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/jobs?status=&limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "jobs"],
+              "query": [
+                { "key": "status", "value": "", "description": "PENDING | RUNNING | SUCCESS | FAILED" },
+                { "key": "limit", "value": "50" }
+              ]
+            }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "[\n  { \"id\": 1, \"job_type\": \"snapshot_refresh\", \"status\": \"SUCCESS\", \"started_at\": \"2026-05-06T01:00:00\", \"completed_at\": \"2026-05-06T01:08:23\" }\n]" }
+          ]
+        },
+        {
+          "name": "GET /admin/reconciliation — Reconciliation issues",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/reconciliation?status=OPEN&limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "reconciliation"],
+              "query": [
+                { "key": "status", "value": "OPEN", "description": "OPEN | RESOLVED" },
+                { "key": "limit", "value": "50" }
+              ]
+            }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "[\n  { \"id\": 1, \"issue_type\": \"missing_nav\", \"entity_type\": \"scheme\", \"entity_key\": \"100027\", \"severity\": \"warning\", \"status\": \"OPEN\" }\n]" }
+          ]
+        },
+        {
+          "name": "POST /admin/reconciliation/{issue_id}/resolve — Mark resolved",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/admin/reconciliation/{{issueId}}/resolve", "host": ["{{baseUrl}}"], "path": ["admin", "reconciliation", "{{issueId}}", "resolve"] }
+          },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\n  \"message\": \"Issue resolved\",\n  \"detail\": null\n}" },
+            { "name": "404 Not Found", "status": "Not Found", "code": 404, "_postman_previewlanguage": "json", "body": "{\n  \"detail\": \"Issue not found\"\n}" }
+          ]
+        }
+      ]
+    }
+  ]
+}

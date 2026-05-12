@@ -1,0 +1,101 @@
+# ============================================================
+# SECRETS / KEYS — NEVER COMMIT
+# ============================================================
+*.pem
+*.key
+*.crt
+*.cert
+*.pfx
+secrets/
+mf-analytics-key.pem
+
+# Environment files (real values)
+.env
+.env.local
+.env.*.local
+**/.env
+!**/.env.example
+
+# ============================================================
+# Python
+# ============================================================
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+*.egg
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.tox/
+
+# ============================================================
+# Node / Frontend build
+# ============================================================
+node_modules/
+**/node_modules/
+frontend/dist/
+dist/
+build/
+.eslintcache
+.parcel-cache/
+*.tsbuildinfo
+
+# ============================================================
+# Backend runtime data (NOT source)
+# ============================================================
+backend/uploads/
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# ============================================================
+# Database backups / dumps
+# ============================================================
+*.sql.gz
+*.sql.zip
+backup_*.sql
+dump_*.sql
+*.dump
+
+# ============================================================
+# Logs
+# ============================================================
+*.log
+nps_bulk_loader.log
+
+# ============================================================
+# OS / IDE
+# ============================================================
+.DS_Store
+**/.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# ============================================================
+# Claude Code internal (local-only assistant config)
+# ============================================================
+.claude/
+memory/
+
+# ============================================================
+# Docker / Compose overrides
+# ============================================================
+docker-compose.override.yml
+docker-compose.local.yml
+
+# ============================================================
+# Local-only scratch files
+# ============================================================
+*.local
+.local/
+scratch/
+tmp/
+TEMP/

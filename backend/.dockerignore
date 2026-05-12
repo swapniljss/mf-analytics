@@ -1,0 +1,15 @@
+.venv
+venv
+__pycache__
+**/__pycache__
+*.pyc
+*.pyo
+.pytest_cache
+.mypy_cache
+.DS_Store
+.idea
+.vscode
+uploads/*
+!uploads/.gitkeep
+*.log
+.env
