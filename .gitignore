@@ -99,3 +99,11 @@ docker-compose.local.yml
 scratch/
 tmp/
 TEMP/
+
+# ============================================================
+# Documentation .md files — kept LOCAL only, not on GitHub
+# (per project decision — these are internal-use docs)
+# ============================================================
+*.md
+!.github/**/*.md
+
