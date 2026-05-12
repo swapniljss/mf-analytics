@@ -59,6 +59,36 @@ def _run_snapshot_refresh():
         db.close()
 
 
+def _run_nav_price_rebuild():
+    """Rebuild nav_price table from daily_nav + historical_nav. Runs daily at 10:00 IST,
+    right after daily_nav_sync (09:30 IST) so nav_price stays fresh during the day
+    and the nightly snapshot_refresh (01:00 IST next day) sees up-to-date data."""
+    from app.database import SessionLocal
+    from sqlalchemy import text
+    db = SessionLocal()
+    try:
+        db.execute(text("TRUNCATE TABLE nav_price"))
+        db.execute(text("""
+            INSERT INTO nav_price
+            SELECT id, amfi_code, isin_div_payout_growth, isin_div_reinvestment,
+                   scheme_name, nav, repurchase_price, sale_price, nav_date,
+                   'DAILY' AS source_type, 100 AS source_priority, created_at
+            FROM daily_nav
+            UNION ALL
+            SELECT id + 10000000000, amfi_code, isin_div_payout_growth, isin_div_reinvestment,
+                   scheme_name, nav, repurchase_price, sale_price, nav_date,
+                   'HISTORICAL' AS source_type, 50 AS source_priority, created_at
+            FROM historical_nav
+        """))
+        db.commit()
+        logger.info("[Scheduler] nav_price rebuild: success")
+    except Exception as e:
+        logger.error(f"[Scheduler] nav_price rebuild failed: {e}")
+        db.rollback()
+    finally:
+        db.close()
+
+
 def start_scheduler():
     # Scheme Master: every 30 days (4-weekly Sunday 2AM)
     scheduler.add_job(
@@ -89,6 +119,14 @@ def start_scheduler():
         _run_snapshot_refresh,
         trigger=CronTrigger(hour=1, minute=0),
         id="snapshot_refresh",
+        replace_existing=True,
+    )
+
+    # nav_price rebuild: daily at 10 AM IST (right after daily_nav_sync at 9:30 AM)
+    scheduler.add_job(
+        _run_nav_price_rebuild,
+        trigger=CronTrigger(hour=10, minute=0),
+        id="nav_price_rebuild",
         replace_existing=True,
     )
 
