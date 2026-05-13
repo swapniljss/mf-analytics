@@ -1,21 +1,24 @@
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
+import { lazy, Suspense } from 'react'
 import Sidebar from './components/layout/Sidebar'
 import TopBar from './components/layout/TopBar'
 import ErrorBoundary from './components/ui/ErrorBoundary'
-import DashboardPage from './pages/DashboardPage'
-import SchemesPage from './pages/SchemesPage'
-import SchemeDetailPage from './pages/SchemeDetailPage'
-import NAVPage from './pages/NAVPage'
-import AUMPage from './pages/AUMPage'
-import AnalyticsPage from './pages/AnalyticsPage'
-import TrackingPage from './pages/TrackingPage'
-import DisclosurePage from './pages/DisclosurePage'
-import MarketCapPage from './pages/MarketCapPage'
-import PortfolioPage from './pages/PortfolioPage'
-import AdminPage from './pages/AdminPage'
-import GoalCalculatorPage from './pages/GoalCalculatorPage'
-import CategoryComparisonPage from './pages/CategoryComparisonPage'
-import NPSPage from './pages/NPSPage'
+import Spinner from './components/ui/Spinner'
+
+const DashboardPage         = lazy(() => import('./pages/DashboardPage'))
+const SchemesPage           = lazy(() => import('./pages/SchemesPage'))
+const SchemeDetailPage      = lazy(() => import('./pages/SchemeDetailPage'))
+const NAVPage               = lazy(() => import('./pages/NAVPage'))
+const AUMPage               = lazy(() => import('./pages/AUMPage'))
+const AnalyticsPage         = lazy(() => import('./pages/AnalyticsPage'))
+const TrackingPage          = lazy(() => import('./pages/TrackingPage'))
+const DisclosurePage        = lazy(() => import('./pages/DisclosurePage'))
+const MarketCapPage         = lazy(() => import('./pages/MarketCapPage'))
+const PortfolioPage         = lazy(() => import('./pages/PortfolioPage'))
+const AdminPage             = lazy(() => import('./pages/AdminPage'))
+const GoalCalculatorPage    = lazy(() => import('./pages/GoalCalculatorPage'))
+const CategoryComparisonPage = lazy(() => import('./pages/CategoryComparisonPage'))
+const NPSPage               = lazy(() => import('./pages/NPSPage'))
 
 const PAGE_TITLES: Record<string, string> = {
   '/': 'Dashboard',
@@ -47,22 +50,24 @@ function Layout() {
         <TopBar title={title} />
         <main className="flex-1 overflow-auto">
           <ErrorBoundary>
-            <Routes>
-              <Route path="/" element={<DashboardPage />} />
-              <Route path="/schemes" element={<SchemesPage />} />
-              <Route path="/schemes/:amfiCode" element={<SchemeDetailPage />} />
-              <Route path="/nav" element={<NAVPage />} />
-              <Route path="/aum" element={<AUMPage />} />
-              <Route path="/analytics" element={<AnalyticsPage />} />
-              <Route path="/tracking" element={<TrackingPage />} />
-              <Route path="/disclosure" element={<DisclosurePage />} />
-              <Route path="/portfolio" element={<PortfolioPage />} />
-              <Route path="/market-cap" element={<MarketCapPage />} />
-              <Route path="/admin" element={<AdminPage />} />
-              <Route path="/goal-calculator" element={<GoalCalculatorPage />} />
-              <Route path="/category" element={<CategoryComparisonPage />} />
-              <Route path="/nps" element={<NPSPage />} />
-            </Routes>
+            <Suspense fallback={<div className="p-6"><Spinner /></div>}>
+              <Routes>
+                <Route path="/" element={<DashboardPage />} />
+                <Route path="/schemes" element={<SchemesPage />} />
+                <Route path="/schemes/:amfiCode" element={<SchemeDetailPage />} />
+                <Route path="/nav" element={<NAVPage />} />
+                <Route path="/aum" element={<AUMPage />} />
+                <Route path="/analytics" element={<AnalyticsPage />} />
+                <Route path="/tracking" element={<TrackingPage />} />
+                <Route path="/disclosure" element={<DisclosurePage />} />
+                <Route path="/portfolio" element={<PortfolioPage />} />
+                <Route path="/market-cap" element={<MarketCapPage />} />
+                <Route path="/admin" element={<AdminPage />} />
+                <Route path="/goal-calculator" element={<GoalCalculatorPage />} />
+                <Route path="/category" element={<CategoryComparisonPage />} />
+                <Route path="/nps" element={<NPSPage />} />
+              </Routes>
+            </Suspense>
           </ErrorBoundary>
         </main>
       </div>
