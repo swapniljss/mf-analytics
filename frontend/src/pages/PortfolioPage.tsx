@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Upload, Search, CheckCircle, AlertCircle, X } from 'lucide-react'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import apiClient from '../api/client'
+import { useDebouncedValue } from '../hooks/useDebouncedValue'
 import Spinner from '../components/ui/Spinner'
 import EmptyState from '../components/ui/EmptyState'
 import Badge from '../components/ui/Badge'
@@ -132,10 +133,11 @@ function ConcentrationPanel({
 function HoldingsBrowser() {
   const [reportMonth, setReportMonth] = useState('')
   const [amfiCode, setAmfiCode] = useState('')
-  const [search, setSearch] = useState('')
+  const [searchInput, setSearchInput] = useState('')
   const [sector, setSector] = useState('')
   const [page, setPage] = useState(1)
   const [concentrationAmfi, setConcentrationAmfi] = useState<string | null>(null)
+  const search = useDebouncedValue(searchInput, 300)
 
   // Months list
   const { data: monthsData } = useQuery<{ months: string[] }>({
@@ -218,8 +220,8 @@ function HoldingsBrowser() {
               <input
                 type="text"
                 placeholder="Search company…"
-                value={search}
-                onChange={e => { setSearch(e.target.value); resetPage() }}
+                value={searchInput}
+                onChange={e => { setSearchInput(e.target.value); resetPage() }}
                 className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>

@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Search, Upload, RefreshCw, TrendingUp, TrendingDown, CheckCircle, AlertCircle } from 'lucide-react'
 import apiClient from '../api/client'
+import { useDebouncedValue } from '../hooks/useDebouncedValue'
 import Spinner from '../components/ui/Spinner'
 import EmptyState from '../components/ui/EmptyState'
 import Badge from '../components/ui/Badge'
@@ -97,7 +98,8 @@ export default function NPSPage() {
   const [tier, setTier]             = useState('')
   const [category, setCategory]     = useState('')
   const [isApy, setIsApy]           = useState('')
-  const [search, setSearch]         = useState('')
+  const [searchInput, setSearchInput] = useState('')
+  const search = useDebouncedValue(searchInput, 300)
 
   // upload state
   const fileRef = useRef<HTMLInputElement>(null)
@@ -195,7 +197,7 @@ export default function NPSPage() {
           {tabs.map(({ key, label }) => (
             <button
               key={key}
-              onClick={() => { setActiveTab(key); setSearch('') }}
+              onClick={() => { setActiveTab(key); setSearchInput('') }}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 activeTab === key ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'
               }`}
@@ -236,8 +238,8 @@ export default function NPSPage() {
               <input
                 type="text"
                 placeholder="Search scheme name…"
-                value={search}
-                onChange={e => setSearch(e.target.value)}
+                value={searchInput}
+                onChange={e => setSearchInput(e.target.value)}
                 className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>

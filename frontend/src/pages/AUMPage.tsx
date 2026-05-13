@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useAumFundwise, useAumPeriods, useAumSchemewise } from '../hooks/useAUM'
+import { useDebouncedValue } from '../hooks/useDebouncedValue'
 import Spinner from '../components/ui/Spinner'
 import EmptyState from '../components/ui/EmptyState'
 import { formatCrores, formatNumber } from '../utils/formatters'
@@ -7,7 +8,8 @@ import { formatCrores, formatNumber } from '../utils/formatters'
 export default function AUMPage() {
   const [activeTab, setActiveTab] = useState<'fund' | 'scheme'>('fund')
   const [page, setPage] = useState(1)
-  const [search, setSearch] = useState('')
+  const [searchInput, setSearchInput] = useState('')
+  const search = useDebouncedValue(searchInput, 300)
 
   const { data: periods } = useAumPeriods()
   const [selectedFyId, setSelectedFyId] = useState<number | undefined>()
@@ -60,8 +62,8 @@ export default function AUMPage() {
           <input
             type="text"
             placeholder={activeTab === 'fund' ? 'Search AMC...' : 'Search scheme...'}
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1) }}
+            value={searchInput}
+            onChange={(e) => { setSearchInput(e.target.value); setPage(1) }}
             className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[200px]"
           />
         </div>

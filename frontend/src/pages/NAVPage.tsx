@@ -2,13 +2,15 @@ import { useState } from 'react'
 import { Search, RefreshCw } from 'lucide-react'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { fetchDailyNav, fetchLatestNavDate, triggerDailyNavSync } from '../api/nav'
+import { useDebouncedValue } from '../hooks/useDebouncedValue'
 import Spinner from '../components/ui/Spinner'
 import EmptyState from '../components/ui/EmptyState'
 import { formatDate, formatNAV } from '../utils/formatters'
 
 export default function NAVPage() {
-  const [search, setSearch] = useState('')
+  const [searchInput, setSearchInput] = useState('')
   const [page, setPage] = useState(1)
+  const search = useDebouncedValue(searchInput, 300)
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['daily-nav', search, page],
@@ -32,8 +34,8 @@ export default function NAVPage() {
             <input
               type="text"
               placeholder="Search scheme name..."
-              value={search}
-              onChange={(e) => { setSearch(e.target.value); setPage(1) }}
+              value={searchInput}
+              onChange={(e) => { setSearchInput(e.target.value); setPage(1) }}
               className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>

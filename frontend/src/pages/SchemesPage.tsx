@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Search, RefreshCw } from 'lucide-react'
 import { useSchemes, useAmcList, useCategories } from '../hooks/useSchemes'
+import { useDebouncedValue } from '../hooks/useDebouncedValue'
 import Spinner from '../components/ui/Spinner'
 import EmptyState from '../components/ui/EmptyState'
 import Badge, { statusBadgeVariant } from '../components/ui/Badge'
@@ -10,11 +11,12 @@ import { useNavigate } from 'react-router-dom'
 
 export default function SchemesPage() {
   const navigate = useNavigate()
-  const [search, setSearch] = useState('')
+  const [searchInput, setSearchInput] = useState('')
   const [selectedAmc, setSelectedAmc] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('')
   const [selectedPlan, setSelectedPlan] = useState('')
   const [page, setPage] = useState(1)
+  const search = useDebouncedValue(searchInput, 300)
 
   const { data, isLoading } = useSchemes({
     search: search || undefined,
@@ -38,8 +40,8 @@ export default function SchemesPage() {
             <input
               type="text"
               placeholder="Search by scheme name or AMFI code..."
-              value={search}
-              onChange={(e) => { setSearch(e.target.value); setPage(1) }}
+              value={searchInput}
+              onChange={(e) => { setSearchInput(e.target.value); setPage(1) }}
               className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>

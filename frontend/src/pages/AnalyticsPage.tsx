@@ -1,21 +1,13 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { RefreshCw, AlertTriangle } from 'lucide-react'
 import { useSnapshots } from '../hooks/useAnalytics'
+import { useDebouncedValue } from '../hooks/useDebouncedValue'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { triggerSnapshotRefresh } from '../api/analytics'
 import apiClient from '../api/client'
 import Spinner from '../components/ui/Spinner'
 import EmptyState from '../components/ui/EmptyState'
 import { formatCrores, formatDate, formatNAV, formatReturn, formatPercent, returnColor } from '../utils/formatters'
-
-function useDebouncedValue<T>(value: T, delay = 300): T {
-  const [debounced, setDebounced] = useState(value)
-  useEffect(() => {
-    const t = setTimeout(() => setDebounced(value), delay)
-    return () => clearTimeout(t)
-  }, [value, delay])
-  return debounced
-}
 
 interface DashboardSummaryExt {
   total_active_schemes: number

@@ -2,14 +2,16 @@ import { useState } from 'react'
 import { RefreshCw } from 'lucide-react'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { fetchTrackingError, fetchTrackingDifference, triggerTrackingSync } from '../api/tracking'
+import { useDebouncedValue } from '../hooks/useDebouncedValue'
 import Spinner from '../components/ui/Spinner'
 import EmptyState from '../components/ui/EmptyState'
 import { formatDate, formatPercent } from '../utils/formatters'
 
 export default function TrackingPage() {
   const [activeTab, setActiveTab] = useState<'error' | 'difference'>('error')
-  const [search, setSearch] = useState('')
+  const [searchInput, setSearchInput] = useState('')
   const [page, setPage] = useState(1)
+  const search = useDebouncedValue(searchInput, 300)
 
   const { data: teData, isLoading: teLoading, refetch: teRefetch } = useQuery({
     queryKey: ['tracking-error', search, page],
@@ -46,8 +48,8 @@ export default function TrackingPage() {
           <input
             type="text"
             placeholder="Search AMC..."
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1) }}
+            value={searchInput}
+            onChange={(e) => { setSearchInput(e.target.value); setPage(1) }}
             className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 flex-1 min-w-[180px]"
           />
           <button
