@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
-import { CheckCircle, Info, X } from 'lucide-react'
+import { CheckCircle, Info, AlertCircle, X } from 'lucide-react'
 
-type ToastType = 'success' | 'info'
+type ToastType = 'success' | 'info' | 'error'
 
 interface ToastProps {
   message: string | null
@@ -26,9 +26,10 @@ export default function Toast({
 
   const styles: Record<ToastType, string> = {
     success: 'bg-green-50 border-green-200 text-green-800',
-    info: 'bg-blue-50 border-blue-200 text-blue-800',
+    info:    'bg-blue-50 border-blue-200 text-blue-800',
+    error:   'bg-red-50 border-red-200 text-red-800',
   }
-  const Icon = type === 'success' ? CheckCircle : Info
+  const Icon = type === 'success' ? CheckCircle : type === 'error' ? AlertCircle : Info
 
   return (
     <div className="fixed bottom-4 right-4 z-50 pointer-events-none">

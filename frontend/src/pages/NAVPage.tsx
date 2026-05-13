@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { Search, RefreshCw } from 'lucide-react'
-import { useQuery, useMutation } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { fetchDailyNav, fetchLatestNavDate, triggerDailyNavSync } from '../api/nav'
 import { useDebouncedValue } from '../hooks/useDebouncedValue'
 import Spinner from '../components/ui/Spinner'
+import Toast from '../components/ui/Toast'
 import EmptyState from '../components/ui/EmptyState'
 import { formatDate, formatNAV } from '../utils/formatters'
 
@@ -11,6 +12,8 @@ export default function NAVPage() {
   const [searchInput, setSearchInput] = useState('')
   const [page, setPage] = useState(1)
   const search = useDebouncedValue(searchInput, 300)
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'info' | 'error' } | null>(null)
+  const queryClient = useQueryClient()
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['daily-nav', search, page],
@@ -22,7 +25,21 @@ export default function NAVPage() {
   })
   const syncMutation = useMutation({
     mutationFn: triggerDailyNavSync,
-    onSuccess: () => refetch(),
+    onMutate: () => {
+      setToast({ message: "Fetching today's NAV from AMFI… usually takes ~10 seconds.", type: 'info' })
+    },
+    onSuccess: (result) => {
+      setToast({
+        message: result?.message || "Today's NAV synced ✓",
+        type: 'success',
+      })
+      refetch()
+      queryClient.invalidateQueries({ queryKey: ['latest-nav-date'] })
+    },
+    onError: (err: unknown) => {
+      const msg = err instanceof Error ? err.message : 'NAV sync failed — try again later.'
+      setToast({ message: msg, type: 'error' })
+    },
   })
 
   return (
@@ -48,10 +65,12 @@ export default function NAVPage() {
             <button
               onClick={() => syncMutation.mutate()}
               disabled={syncMutation.isPending}
-              className="btn-primary flex items-center gap-2"
+              aria-disabled={syncMutation.isPending}
+              title={syncMutation.isPending ? "Fetching today's NAV from AMFI — please wait" : undefined}
+              className="btn-primary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <RefreshCw size={14} className={syncMutation.isPending ? 'animate-spin' : ''} />
-              {syncMutation.isPending ? 'Fetching...' : 'Fetch Today\'s NAV'}
+              {syncMutation.isPending ? 'Fetching…' : "Fetch Today's NAV"}
             </button>
           </div>
         </div>
@@ -101,6 +120,8 @@ export default function NAVPage() {
           </div>
         )}
       </div>
+
+      <Toast message={toast?.message ?? null} type={toast?.type} onDismiss={() => setToast(null)} />
     </div>
   )
 }

@@ -3,9 +3,10 @@ import { Search, RefreshCw } from 'lucide-react'
 import { useSchemes, useAmcList, useCategories } from '../hooks/useSchemes'
 import { useDebouncedValue } from '../hooks/useDebouncedValue'
 import Spinner from '../components/ui/Spinner'
+import Toast from '../components/ui/Toast'
 import EmptyState from '../components/ui/EmptyState'
 import Badge, { statusBadgeVariant } from '../components/ui/Badge'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { triggerSchemeMasterSync } from '../api/schemes'
 import { useNavigate } from 'react-router-dom'
 
@@ -17,6 +18,8 @@ export default function SchemesPage() {
   const [selectedPlan, setSelectedPlan] = useState('')
   const [page, setPage] = useState(1)
   const search = useDebouncedValue(searchInput, 300)
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'info' | 'error' } | null>(null)
+  const queryClient = useQueryClient()
 
   const { data, isLoading } = useSchemes({
     search: search || undefined,
@@ -28,7 +31,26 @@ export default function SchemesPage() {
   })
   const { data: amcs } = useAmcList()
   const { data: categories } = useCategories()
-  const syncMutation = useMutation({ mutationFn: triggerSchemeMasterSync })
+  const syncMutation = useMutation({
+    mutationFn: triggerSchemeMasterSync,
+    onMutate: () => {
+      setToast({ message: 'Syncing scheme master from AMFI… usually takes ~30 seconds.', type: 'info' })
+    },
+    onSuccess: (result) => {
+      setToast({
+        message: result?.message || 'Scheme master synced ✓',
+        type: 'success',
+      })
+      // Refresh list + filter dropdowns so newly-synced schemes appear immediately.
+      queryClient.invalidateQueries({ queryKey: ['schemes'] })
+      queryClient.invalidateQueries({ queryKey: ['amcs'] })
+      queryClient.invalidateQueries({ queryKey: ['categories'] })
+    },
+    onError: (err: unknown) => {
+      const msg = err instanceof Error ? err.message : 'Scheme master sync failed — try again later.'
+      setToast({ message: msg, type: 'error' })
+    },
+  })
 
   return (
     <div className="p-6 space-y-4">
@@ -73,10 +95,12 @@ export default function SchemesPage() {
           <button
             onClick={() => syncMutation.mutate()}
             disabled={syncMutation.isPending}
-            className="btn-secondary flex items-center gap-2"
+            aria-disabled={syncMutation.isPending}
+            title={syncMutation.isPending ? 'Syncing scheme master from AMFI — please wait' : undefined}
+            className="btn-secondary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <RefreshCw size={14} className={syncMutation.isPending ? 'animate-spin' : ''} />
-            Sync Master
+            {syncMutation.isPending ? 'Syncing…' : 'Sync Master'}
           </button>
         </div>
         {data && (
@@ -156,6 +180,8 @@ export default function SchemesPage() {
           </div>
         )}
       </div>
+
+      <Toast message={toast?.message ?? null} type={toast?.type} onDismiss={() => setToast(null)} />
     </div>
   )
 }
