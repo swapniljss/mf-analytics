@@ -159,6 +159,10 @@ def get_dashboard_summary(db: Session = Depends(get_db)):
     schemes_with_returns = db.query(func.count(SchemeAnalyticsSnapshot.id)).filter(
         SchemeAnalyticsSnapshot.return_1y.isnot(None)
     ).scalar()
+    # Most recent per-scheme refresh — drives the "Last refreshed X ago" UI signal.
+    latest_snapshot_refresh = db.query(
+        func.max(SchemeAnalyticsSnapshot.snapshot_refreshed_at)
+    ).scalar()
 
     # Industry AUM: prefer monthly-disclosure sum; fall back to fund-wise AUM table
     total_aum = db.query(func.sum(SchemeAnalyticsSnapshot.aum_cr)).scalar()
@@ -181,6 +185,12 @@ def get_dashboard_summary(db: Session = Depends(get_db)):
         "total_industry_aum_cr": float(total_aum) if total_aum else None,
         "schemes_with_nav": schemes_with_nav,
         "schemes_with_returns": schemes_with_returns,
+        # MySQL stores snapshot_refreshed_at as a naive UTC datetime (written
+        # via datetime.utcnow()). isoformat() alone produces "...T09:35:15"
+        # with no timezone marker, which JS parses as LOCAL time, causing a
+        # 5h30 ("5 hr ago") drift in IST. The trailing "Z" marks it explicitly
+        # as UTC so frontend formatRelativeTime() gets the right delta.
+        "latest_snapshot_refreshed_at": (latest_snapshot_refresh.isoformat() + "Z") if latest_snapshot_refresh else None,
         "data_status": {
             "has_nav": (schemes_with_nav or 0) > 0,
             "has_returns": (schemes_with_returns or 0) > 0,

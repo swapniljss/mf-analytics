@@ -49,3 +49,16 @@ export function formatPercent(value?: unknown, decimals = 2): string {
   if (v == null) return '—'
   return `${v.toFixed(decimals)}%`
 }
+
+export function formatRelativeTime(iso?: string | null): string {
+  if (!iso) return 'never'
+  const then = new Date(iso).getTime()
+  if (isNaN(then)) return 'never'
+  const diffSec = Math.floor((Date.now() - then) / 1000)
+  if (diffSec < 30) return 'just now'
+  if (diffSec < 60) return `${diffSec}s ago`
+  if (diffSec < 3600) return `${Math.floor(diffSec / 60)} min ago`
+  if (diffSec < 86400) return `${Math.floor(diffSec / 3600)} hr ago`
+  const days = Math.floor(diffSec / 86400)
+  return `${days} day${days === 1 ? '' : 's'} ago`
+}

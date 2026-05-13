@@ -1,13 +1,43 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { RefreshCw, AlertTriangle } from 'lucide-react'
 import { useSnapshots } from '../hooks/useAnalytics'
 import { useDebouncedValue } from '../hooks/useDebouncedValue'
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { triggerSnapshotRefresh } from '../api/analytics'
 import apiClient from '../api/client'
-import Spinner from '../components/ui/Spinner'
+import TableSkeleton from '../components/ui/TableSkeleton'
+import Toast from '../components/ui/Toast'
 import EmptyState from '../components/ui/EmptyState'
-import { formatCrores, formatDate, formatNAV, formatReturn, formatPercent, returnColor } from '../utils/formatters'
+import { formatCrores, formatDate, formatNAV, formatReturn, formatPercent, formatRelativeTime, returnColor } from '../utils/formatters'
+
+// localStorage key for cross-mount refresh-state persistence — so navigating
+// away and back doesn't lose the "Refresh in progress" indicator and let
+// the user fire a second parallel refresh.
+const REFRESH_STATE_KEY = 'mf:snapshot-refresh-state'
+
+interface PersistedRefreshState {
+  startedFromIso: string | null
+  startedAtMs: number
+}
+
+function readPersistedRefreshState(maxDurationMs: number): PersistedRefreshState | null {
+  try {
+    const raw = localStorage.getItem(REFRESH_STATE_KEY)
+    if (!raw) return null
+    const s = JSON.parse(raw) as PersistedRefreshState
+    if (Date.now() - s.startedAtMs > maxDurationMs) {
+      localStorage.removeItem(REFRESH_STATE_KEY)
+      return null
+    }
+    return s
+  } catch {
+    return null
+  }
+}
+
+function clearPersistedRefreshState() {
+  try { localStorage.removeItem(REFRESH_STATE_KEY) } catch { /* ignore */ }
+}
 
 interface DashboardSummaryExt {
   total_active_schemes: number
@@ -16,12 +46,25 @@ interface DashboardSummaryExt {
   total_industry_aum_cr?: number
   schemes_with_nav?: number
   schemes_with_returns?: number
+  latest_snapshot_refreshed_at?: string
   data_status?: {
     has_nav: boolean
     has_returns: boolean
     needs_history_sync: boolean
   }
 }
+
+// When a refresh is in progress, poll /analytics/summary every this-many ms so
+// the "Last refreshed X ago" badge stays current and we can detect completion.
+const POLL_INTERVAL_MS = 30_000
+// We consider the refresh "done" once the latest snapshot_refreshed_at on the
+// server has moved more than this far past the value we captured at click time.
+// A real bulk refresh moves it many minutes; a small/partial run won't trip this.
+const REFRESH_COMPLETE_THRESHOLD_MS = 5 * 60 * 1000
+// Hard cap so the user never gets permanently locked out if completion
+// detection misses (e.g. partial run on a tiny local DB, network drop during
+// poll). After this, we re-enable the button even without a "done" signal.
+const REFRESH_MAX_DURATION_MS = 15 * 60 * 1000
 
 
 export default function AnalyticsPage() {
@@ -33,10 +76,34 @@ export default function AnalyticsPage() {
   const search = useDebouncedValue(searchInput, 300)
   const category = useDebouncedValue(categoryInput, 300)
 
+  // Snapshot of the server's latest refresh time captured at click — used to
+  // detect when a new background refresh has completed. Persisted in
+  // localStorage so navigating away (which unmounts this lazy-loaded page)
+  // doesn't lose the in-progress state.
+  const refreshStartedFromRef = useRef<string | null>(null)
+  const [isRefreshing, setIsRefreshing] = useState(() => {
+    const s = readPersistedRefreshState(REFRESH_MAX_DURATION_MS)
+    if (s) {
+      refreshStartedFromRef.current = s.startedFromIso
+      return true
+    }
+    return false
+  })
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'info' } | null>(null)
+  const queryClient = useQueryClient()
+  // Re-render every 30s so the "Last refreshed X ago" string stays current
+  // even when the user is idle on the page (no other state changes).
+  const [, forceTick] = useState(0)
+  useEffect(() => {
+    const t = setInterval(() => forceTick(n => n + 1), 30_000)
+    return () => clearInterval(t)
+  }, [])
+
   const { data: summary } = useQuery<DashboardSummaryExt>({
     queryKey: ['analytics-summary'],
     queryFn: () => apiClient.get('/analytics/summary').then(r => r.data),
     staleTime: 60_000,
+    refetchInterval: isRefreshing ? POLL_INTERVAL_MS : false,
   })
 
   const { data, isLoading, refetch } = useSnapshots({
@@ -48,8 +115,61 @@ export default function AnalyticsPage() {
 
   const refreshMutation = useMutation({
     mutationFn: triggerSnapshotRefresh,
-    onSuccess: () => refetch(),
+    onSuccess: () => {
+      const startedFrom = summary?.latest_snapshot_refreshed_at ?? null
+      refreshStartedFromRef.current = startedFrom
+      setIsRefreshing(true)
+      try {
+        localStorage.setItem(REFRESH_STATE_KEY, JSON.stringify({
+          startedFromIso: startedFrom,
+          startedAtMs: Date.now(),
+        }))
+      } catch { /* ignore quota / private-mode errors */ }
+      setToast({
+        message: 'Snapshot refresh started — will run in the background (~7-8 min).',
+        type: 'info',
+      })
+    },
   })
+
+  // Detect background refresh completion: the server's MAX(snapshot_refreshed_at)
+  // has advanced past our captured "started from" value by more than the
+  // threshold, meaning a real bulk run wrote many fresh rows.
+  useEffect(() => {
+    if (!isRefreshing) return
+    const current = summary?.latest_snapshot_refreshed_at
+    const startedFrom = refreshStartedFromRef.current
+    if (!current) return
+    const advancedMs = startedFrom
+      ? new Date(current).getTime() - new Date(startedFrom).getTime()
+      : Number.POSITIVE_INFINITY
+    if (advancedMs >= REFRESH_COMPLETE_THRESHOLD_MS) {
+      setIsRefreshing(false)
+      refreshStartedFromRef.current = null
+      clearPersistedRefreshState()
+      setToast({
+        message: `Snapshot refresh complete · ${summary?.total_active_schemes?.toLocaleString('en-IN') ?? ''} schemes updated.`,
+        type: 'success',
+      })
+      // Force the summary + snapshots queries to refetch so the "Last refreshed
+      // X ago" badge and the table show the post-refresh data without waiting
+      // for the next staleTime window.
+      queryClient.invalidateQueries({ queryKey: ['analytics-summary'] })
+      refetch()
+    }
+  }, [summary?.latest_snapshot_refreshed_at, isRefreshing, summary?.total_active_schemes, refetch, queryClient])
+
+  // Safety: re-enable the button after REFRESH_MAX_DURATION_MS in case
+  // completion detection never fires (partial refresh / network drop).
+  useEffect(() => {
+    if (!isRefreshing) return
+    const t = setTimeout(() => {
+      setIsRefreshing(false)
+      refreshStartedFromRef.current = null
+      clearPersistedRefreshState()
+    }, REFRESH_MAX_DURATION_MS)
+    return () => clearTimeout(t)
+  }, [isRefreshing])
 
   return (
     <div className="p-6 space-y-4">
@@ -73,14 +193,23 @@ export default function AnalyticsPage() {
           </div>
           <button
             onClick={() => refreshMutation.mutate()}
-            disabled={refreshMutation.isPending}
-            className="btn-primary flex items-center gap-2"
+            disabled={refreshMutation.isPending || isRefreshing}
+            aria-disabled={refreshMutation.isPending || isRefreshing}
+            title={isRefreshing ? 'A refresh is already running in the background — please wait until it completes.' : undefined}
+            className="btn-primary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <RefreshCw size={14} className={refreshMutation.isPending ? 'animate-spin' : ''} />
-            {refreshMutation.isPending ? 'Refreshing...' : 'Refresh Snapshots'}
+            <RefreshCw size={14} className={(refreshMutation.isPending || isRefreshing) ? 'animate-spin' : ''} />
+            {isRefreshing ? 'Refresh in progress…' : refreshMutation.isPending ? 'Refreshing...' : 'Refresh Snapshots'}
           </button>
         </div>
-        {data && <p className="text-xs text-gray-400 mt-2">{data.total.toLocaleString('en-IN')} schemes with snapshot data</p>}
+        <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-gray-400">
+          {data && <span>{data.total.toLocaleString('en-IN')} schemes with snapshot data</span>}
+          {summary?.latest_snapshot_refreshed_at && (
+            <span aria-label="Snapshot freshness">
+              · Last refreshed: <span className="font-medium text-gray-600">{formatRelativeTime(summary.latest_snapshot_refreshed_at)}</span>
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Data-sync banner — shown when NAV history hasn't been loaded */}
@@ -101,7 +230,7 @@ export default function AnalyticsPage() {
       )}
 
       <div className="card p-0 overflow-hidden">
-        {isLoading ? <Spinner /> : !data?.items.length ? (
+        {isLoading ? <TableSkeleton rows={10} cols={11} /> : !data?.items.length ? (
           <EmptyState message="No snapshot data — click Refresh Snapshots to compute returns" />
         ) : (
           <div className="overflow-x-auto">
@@ -155,6 +284,8 @@ export default function AnalyticsPage() {
           </div>
         )}
       </div>
+
+      <Toast message={toast?.message ?? null} type={toast?.type} onDismiss={() => setToast(null)} />
     </div>
   )
 }
