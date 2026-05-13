@@ -47,6 +47,34 @@ class SchemeSnapshotOut(BaseModel):
         from_attributes = True
 
 
+class SchemeSnapshotListItem(BaseModel):
+    """Slim DTO for the /analytics/snapshots list endpoint.
+
+    Returns only the 16 fields the Analytics page table actually renders.
+    Pydantic ignores extra ORM attributes, so the 28 unused fields are dropped
+    from the JSON payload — same data source, ~3x smaller response. The single
+    scheme detail endpoint continues to use the fat SchemeSnapshotOut."""
+    id: int
+    amfi_code: str
+    scheme_name: Optional[str] = None
+    amc_name: Optional[str] = None
+    scheme_category: Optional[str] = None
+    latest_nav: Optional[Decimal] = None
+    nav_date: Optional[date] = None
+    return_1w: Optional[Decimal] = None
+    return_1m: Optional[Decimal] = None
+    return_3m: Optional[Decimal] = None
+    return_6m: Optional[Decimal] = None
+    return_1y: Optional[Decimal] = None
+    return_3y: Optional[Decimal] = None
+    return_5y: Optional[Decimal] = None
+    aum_cr: Optional[Decimal] = None
+    expense_ratio: Optional[Decimal] = None
+
+    class Config:
+        from_attributes = True
+
+
 class NAVDataPoint(BaseModel):
     nav_date: date
     nav: Decimal

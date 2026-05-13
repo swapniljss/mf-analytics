@@ -6,7 +6,7 @@ from datetime import date, timedelta
 from app.database import get_db
 from app.models.analytics import SchemeAnalyticsSnapshot
 from app.models.nav import NavPrice
-from app.schemas.analytics import SchemeSnapshotOut, SchemeReturnsOut, NAVDataPoint, TopPerformerOut
+from app.schemas.analytics import SchemeSnapshotOut, SchemeSnapshotListItem, SchemeReturnsOut, NAVDataPoint, TopPerformerOut
 from app.schemas.common import PaginatedResponse
 from app.services.analytics_service import (
     compute_scheme_returns,
@@ -18,7 +18,7 @@ from app.services.analytics_service import (
 router = APIRouter(prefix="/analytics", tags=["Analytics"])
 
 
-@router.get("/snapshots", response_model=PaginatedResponse[SchemeSnapshotOut])
+@router.get("/snapshots", response_model=PaginatedResponse[SchemeSnapshotListItem])
 def list_snapshots(
     search: Optional[str] = None,
     amc_name: Optional[str] = None,
