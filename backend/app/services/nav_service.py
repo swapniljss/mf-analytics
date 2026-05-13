@@ -63,6 +63,20 @@ def fetch_daily_nav(db: Session) -> dict:
 
     records = parse_nav_all(response.text, nav_date)
     upserted = _upsert_daily_nav(db, records)
+
+    # nav_price is a materialized TABLE (Fix #2), rebuilt nightly at 10 AM IST.
+    # When users manually trigger a NAV sync mid-day, also rebuild nav_price so
+    # endpoints reading MAX(nav_price.nav_date) — Dashboard's "Latest NAV Date"
+    # card and the TopBar pill — reflect today's NAV immediately instead of
+    # waiting until the next scheduled rebuild.
+    try:
+        from app.jobs.scheduler import _run_nav_price_rebuild
+        _run_nav_price_rebuild()
+    except Exception as e:
+        # Non-critical: the NAV data is already committed; only the materialized
+        # view is stale. Next 10 AM rebuild will catch up. Log and continue.
+        logger.warning(f"Post-sync nav_price rebuild skipped (non-critical): {e}")
+
     return {"nav_date": str(nav_date), "records": len(records), "inserted": upserted}
 
 
@@ -70,7 +84,8 @@ def _upsert_daily_nav(db: Session, records: list) -> int:
     """
     Atomic upsert into daily_nav via INSERT ... ON DUPLICATE KEY UPDATE.
     Requires unique index on daily_nav(amfi_code, nav_date).
-    nav_price is now a VIEW — no separate mirroring needed.
+    nav_price is a materialized TABLE (Fix #2); fetch_daily_nav triggers a
+    rebuild after this upsert so reads see fresh data immediately.
     """
     for i in range(0, len(records), BATCH):
         db.execute(_DAILY_UPSERT_SQL, records[i: i + BATCH])

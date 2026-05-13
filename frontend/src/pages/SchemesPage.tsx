@@ -45,6 +45,10 @@ export default function SchemesPage() {
       queryClient.invalidateQueries({ queryKey: ['schemes'] })
       queryClient.invalidateQueries({ queryKey: ['amcs'] })
       queryClient.invalidateQueries({ queryKey: ['categories'] })
+      // Dashboard "Active Schemes" / "Total AMCs" KPI cards read these counts
+      // via /analytics/summary; invalidate so the cards reflect the new total
+      // without waiting for the 60s staleTime window.
+      queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] })
     },
     onError: (err: unknown) => {
       const msg = err instanceof Error ? err.message : 'Scheme master sync failed — try again later.'

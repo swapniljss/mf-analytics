@@ -153,8 +153,10 @@ export default function AnalyticsPage() {
       })
       // Force the summary + snapshots queries to refetch so the "Last refreshed
       // X ago" badge and the table show the post-refresh data without waiting
-      // for the next staleTime window.
+      // for the next staleTime window. Also invalidate 'dashboard-summary'
+      // (the TopBar pill + Dashboard card use that separate query key).
       queryClient.invalidateQueries({ queryKey: ['analytics-summary'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] })
       refetch()
     }
   }, [summary?.latest_snapshot_refreshed_at, isRefreshing, summary?.total_active_schemes, refetch, queryClient])

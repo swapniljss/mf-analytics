@@ -35,6 +35,12 @@ export default function NAVPage() {
       })
       refetch()
       queryClient.invalidateQueries({ queryKey: ['latest-nav-date'] })
+      // Dashboard card + TopBar pill read latest_nav_date from
+      // /analytics/summary via the 'dashboard-summary' query key; the
+      // Analytics-page "Last refreshed" badge uses 'analytics-summary'.
+      // Invalidate both so they immediately reflect the just-synced date.
+      queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] })
+      queryClient.invalidateQueries({ queryKey: ['analytics-summary'] })
     },
     onError: (err: unknown) => {
       const msg = err instanceof Error ? err.message : 'NAV sync failed — try again later.'
