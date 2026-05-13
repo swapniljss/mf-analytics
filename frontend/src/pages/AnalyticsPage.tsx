@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { RefreshCw, AlertTriangle } from 'lucide-react'
 import { useSnapshots } from '../hooks/useAnalytics'
 import { useMutation, useQuery } from '@tanstack/react-query'
@@ -7,6 +7,15 @@ import apiClient from '../api/client'
 import Spinner from '../components/ui/Spinner'
 import EmptyState from '../components/ui/EmptyState'
 import { formatCrores, formatDate, formatNAV, formatReturn, formatPercent, returnColor } from '../utils/formatters'
+
+function useDebouncedValue<T>(value: T, delay = 300): T {
+  const [debounced, setDebounced] = useState(value)
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(value), delay)
+    return () => clearTimeout(t)
+  }, [value, delay])
+  return debounced
+}
 
 interface DashboardSummaryExt {
   total_active_schemes: number
@@ -24,9 +33,13 @@ interface DashboardSummaryExt {
 
 
 export default function AnalyticsPage() {
-  const [search, setSearch] = useState('')
-  const [category, setCategory] = useState('')
+  const [searchInput, setSearchInput] = useState('')
+  const [categoryInput, setCategoryInput] = useState('')
   const [page, setPage] = useState(1)
+  // Debounce typing by 300ms so a single API call fires after the user
+  // stops typing — not one per keystroke.
+  const search = useDebouncedValue(searchInput, 300)
+  const category = useDebouncedValue(categoryInput, 300)
 
   const { data: summary } = useQuery<DashboardSummaryExt>({
     queryKey: ['analytics-summary'],
@@ -54,15 +67,15 @@ export default function AnalyticsPage() {
             <input
               type="text"
               placeholder="Search schemes..."
-              value={search}
-              onChange={(e) => { setSearch(e.target.value); setPage(1) }}
+              value={searchInput}
+              onChange={(e) => { setSearchInput(e.target.value); setPage(1) }}
               className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[200px]"
             />
             <input
               type="text"
               placeholder="Filter by category..."
-              value={category}
-              onChange={(e) => { setCategory(e.target.value); setPage(1) }}
+              value={categoryInput}
+              onChange={(e) => { setCategoryInput(e.target.value); setPage(1) }}
               className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[200px]"
             />
           </div>

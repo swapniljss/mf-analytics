@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, keepPreviousData } from '@tanstack/react-query'
 import {
   fetchDashboardSummary, fetchSnapshots, fetchSchemeSnapshot,
   fetchSchemeReturns, fetchTopPerformers,
@@ -15,6 +15,8 @@ export const useSnapshots = (params: Parameters<typeof fetchSnapshots>[0]) =>
   useQuery({
     queryKey: ['snapshots', params],
     queryFn: () => fetchSnapshots(params),
+    staleTime: 5 * 60 * 1000,
+    placeholderData: keepPreviousData,
   })
 
 export const useSchemeSnapshot = (amfiCode: string) =>
