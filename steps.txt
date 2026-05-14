@@ -9,3 +9,12 @@ Bookmark these URLs
 App: http://localhost:3000
 API docs: http://localhost:8000/docs
 DB health: http://localhost:8000/health/db
+
+
+# OLD UI
+git checkout pre-ui-modernization-2026-05-14
+docker compose up -d --build frontend
+
+# NEW UI
+git checkout main
+docker compose up -d --build frontend

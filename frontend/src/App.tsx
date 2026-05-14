@@ -1,9 +1,11 @@
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useState, useEffect } from 'react'
 import Sidebar from './components/layout/Sidebar'
 import TopBar from './components/layout/TopBar'
 import ErrorBoundary from './components/ui/ErrorBoundary'
 import Spinner from './components/ui/Spinner'
+import LoginPage from './pages/LoginPage'
+import { useAuth, AuthProvider } from './hooks/useAuth'
 
 const DashboardPage         = lazy(() => import('./pages/DashboardPage'))
 const SchemesPage           = lazy(() => import('./pages/SchemesPage'))
@@ -43,11 +45,16 @@ function Layout() {
     .find((k) => location.pathname === k || location.pathname.startsWith(k + '/'))
   const title = PAGE_TITLES[titleKey || '/'] || 'Mutual Fund Analytics'
 
+  // Mobile sidebar — collapsed by default below lg, opens via hamburger.
+  // Auto-closes when the route changes so navigation feels natural.
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
+  useEffect(() => { setMobileSidebarOpen(false) }, [location.pathname])
+
   return (
-    <div className="flex min-h-screen">
-      <Sidebar />
+    <div className="flex min-h-screen animate-dashboard-enter">
+      <Sidebar isOpen={mobileSidebarOpen} onClose={() => setMobileSidebarOpen(false)} />
       <div className="flex-1 flex flex-col min-w-0">
-        <TopBar title={title} />
+        <TopBar title={title} onMenuClick={() => setMobileSidebarOpen(true)} />
         <main className="flex-1 overflow-auto">
           <ErrorBoundary>
             <Suspense fallback={<div className="p-6"><Spinner /></div>}>
@@ -75,10 +82,19 @@ function Layout() {
   )
 }
 
+// Auth gate — picks LoginPage vs Layout based on local hardcoded-credentials
+// session. Sits OUTSIDE Layout so Layout never conditionally calls hooks.
+function AuthGate() {
+  const { authed } = useAuth()
+  return authed ? <Layout /> : <LoginPage />
+}
+
 export default function App() {
   return (
     <BrowserRouter>
-      <Layout />
+      <AuthProvider>
+        <AuthGate />
+      </AuthProvider>
     </BrowserRouter>
   )
 }

@@ -7,17 +7,18 @@
     <title>Mutual Fund Analytics</title>
     <script>
       // Set dark class BEFORE React mounts to prevent flash of light UI.
-      // Reads localStorage first; falls back to OS preference.
+      // Dark is the DEFAULT — only flip to light if the user explicitly chose
+      // it via the toggle (which writes "0" to localStorage). First-time
+      // visitors land on dark.
       (function () {
         try {
           var stored = localStorage.getItem('mf:dark-mode');
-          var dark =
-            stored === '1' ||
-            (stored !== '0' &&
-              window.matchMedia &&
-              window.matchMedia('(prefers-color-scheme: dark)').matches);
+          var dark = stored !== '0';
           if (dark) document.documentElement.classList.add('dark');
-        } catch (e) { /* private mode / disabled storage — ignore */ }
+        } catch (e) {
+          // private mode / disabled storage — default to dark
+          document.documentElement.classList.add('dark');
+        }
       })();
     </script>
   </head>
