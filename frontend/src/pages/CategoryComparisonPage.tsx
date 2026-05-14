@@ -28,7 +28,7 @@ function fmtReturn(raw?: unknown) {
   if (raw == null) return '—'
   const v = Number(raw)
   if (isNaN(v)) return '—'
-  const cls = v >= 0 ? 'text-green-600' : 'text-red-600'
+  const cls = v >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
   return <span className={`font-medium ${cls}`}>{v.toFixed(2)}%</span>
 }
 
@@ -109,11 +109,11 @@ export default function CategoryComparisonPage() {
       <div className="card">
         <div className="flex flex-wrap gap-3 items-end">
           <div className="flex-1 min-w-[240px]">
-            <label className="text-xs text-gray-500 block mb-1">Category</label>
+            <label className="text-xs text-gray-500 dark:text-gray-400 block mb-1">Category</label>
             <select
               value={category}
               onChange={e => { setCategory(e.target.value); setPage(1) }}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Select a category…</option>
               {(catsData?.categories ?? []).map(c => (
@@ -122,7 +122,7 @@ export default function CategoryComparisonPage() {
             </select>
           </div>
           <div>
-            <label className="text-xs text-gray-500 block mb-1">Period</label>
+            <label className="text-xs text-gray-500 dark:text-gray-400 block mb-1">Period</label>
             <div className="flex gap-1">
               {PERIODS.map(p => (
                 <button
@@ -131,7 +131,7 @@ export default function CategoryComparisonPage() {
                   className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                     period === p.value
                       ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
                   }`}
                 >
                   {p.label}
@@ -146,13 +146,13 @@ export default function CategoryComparisonPage() {
       {data && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[
-            { label: `Avg Return (${periodLabel})`, value: data.category_avg != null ? `${Number(data.category_avg).toFixed(2)}%` : '—', cls: 'text-blue-700' },
-            { label: `Max Return (${periodLabel})`, value: data.category_max != null ? `${Number(data.category_max).toFixed(2)}%` : '—', cls: 'text-green-700' },
-            { label: `Min Return (${periodLabel})`, value: data.category_min != null ? `${Number(data.category_min).toFixed(2)}%` : '—', cls: 'text-red-700' },
-            { label: 'Total Schemes', value: String(data.total), cls: 'text-gray-900' },
+            { label: `Avg Return (${periodLabel})`, value: data.category_avg != null ? `${Number(data.category_avg).toFixed(2)}%` : '—', cls: 'text-blue-700 dark:text-blue-300' },
+            { label: `Max Return (${periodLabel})`, value: data.category_max != null ? `${Number(data.category_max).toFixed(2)}%` : '—', cls: 'text-green-700 dark:text-green-300' },
+            { label: `Min Return (${periodLabel})`, value: data.category_min != null ? `${Number(data.category_min).toFixed(2)}%` : '—', cls: 'text-red-700 dark:text-red-300' },
+            { label: 'Total Schemes', value: String(data.total), cls: 'text-gray-900 dark:text-white' },
           ].map(({ label, value, cls }) => (
-            <div key={label} className="card border border-gray-100">
-              <p className="text-xs text-gray-500">{label}</p>
+            <div key={label} className="card border border-gray-100 dark:border-gray-800">
+              <p className="text-xs text-gray-500 dark:text-gray-400">{label}</p>
               <p className={`text-xl font-bold mt-1 ${cls}`}>{value}</p>
             </div>
           ))}
@@ -170,7 +170,7 @@ export default function CategoryComparisonPage() {
         <div className="card p-0 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-100">
+              <thead className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
                 <tr>
                   <th className="table-header">Rank</th>
                   <th className="table-header">Scheme Name</th>
@@ -186,26 +186,26 @@ export default function CategoryComparisonPage() {
               </thead>
               <tbody>
                 {data.items.map((row) => (
-                  <tr key={row.amfi_code} className="border-b border-gray-50 hover:bg-gray-50">
-                    <td className="table-cell text-gray-400 tabular-nums font-medium">{row.rank}</td>
+                  <tr key={row.amfi_code} className="border-b border-gray-50 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                    <td className="table-cell text-gray-400 dark:text-gray-400 tabular-nums font-medium">{row.rank}</td>
                     <td className="table-cell max-w-[240px]">
                       <button
                         onClick={() => navigate(`/schemes/${row.amfi_code}`)}
-                        className="text-left text-blue-600 hover:text-blue-800 hover:underline font-medium text-sm block truncate"
+                        className="text-left text-blue-600 dark:text-blue-400 hover:text-blue-800 hover:underline font-medium text-sm block truncate"
                         title={row.scheme_name}
                       >
                         {row.scheme_name}
                       </button>
                     </td>
-                    <td className="table-cell text-xs text-gray-500 max-w-[120px]">
+                    <td className="table-cell text-xs text-gray-500 dark:text-gray-400 max-w-[120px]">
                       <span className="block truncate" title={row.amc_name}>{row.amc_name || '—'}</span>
                     </td>
                     <td className="table-cell text-right tabular-nums">{fmtReturn(row.return_value)}</td>
                     <td className="table-cell text-right tabular-nums">{fmtReturn(row.return_1y)}</td>
                     <td className="table-cell text-right tabular-nums">{fmtReturn(row.return_3y)}</td>
                     <td className="table-cell text-right tabular-nums">{fmtReturn(row.return_5y)}</td>
-                    <td className="table-cell text-right tabular-nums text-gray-700">{fmtCr(row.aum_cr)}</td>
-                    <td className="table-cell text-right tabular-nums text-gray-700">
+                    <td className="table-cell text-right tabular-nums text-gray-700 dark:text-gray-300">{fmtCr(row.aum_cr)}</td>
+                    <td className="table-cell text-right tabular-nums text-gray-700 dark:text-gray-300">
                       {row.expense_ratio != null ? `${Number(row.expense_ratio).toFixed(2)}%` : '—'}
                     </td>
                     <td className="table-cell">{quartileBadge(row.category_quartile)}</td>
@@ -217,8 +217,8 @@ export default function CategoryComparisonPage() {
 
           {/* Pagination */}
           {data.total > 50 && (
-            <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
-              <p className="text-xs text-gray-500">
+            <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 dark:border-gray-800">
+              <p className="text-xs text-gray-500 dark:text-gray-400">
                 Page {page} — showing {Math.min(page * 50, data.total)} of {data.total} schemes
               </p>
               <div className="flex gap-2">

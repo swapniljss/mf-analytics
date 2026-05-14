@@ -23,10 +23,10 @@ function InputField({
 }) {
   return (
     <div>
-      <label className="text-xs text-gray-500 block mb-1">{label}</label>
+      <label className="text-xs text-gray-500 dark:text-gray-400 block mb-1">{label}</label>
       <div className="relative">
         {prefix && (
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">{prefix}</span>
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-400 text-sm">{prefix}</span>
         )}
         <input
           type="number"
@@ -35,7 +35,7 @@ function InputField({
           step={step ?? 1}
           value={value}
           onChange={e => onChange(e.target.value)}
-          className={`w-full border border-gray-200 rounded-lg py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${prefix ? 'pl-8 pr-3' : 'px-3'}`}
+          className={`w-full border border-gray-200 dark:border-gray-700 rounded-lg py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${prefix ? 'pl-8 pr-3' : 'px-3'}`}
         />
       </div>
     </div>
@@ -44,10 +44,10 @@ function InputField({
 
 function KpiCard({ label, value, sub, highlight }: { label: string; value: string; sub?: string; highlight?: boolean }) {
   return (
-    <div className={`rounded-lg p-4 border ${highlight ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-100'}`}>
-      <p className="text-xs text-gray-500 mb-1">{label}</p>
-      <p className={`text-xl font-bold ${highlight ? 'text-blue-700' : 'text-gray-900'}`}>{value}</p>
-      {sub && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
+    <div className={`rounded-lg p-4 border ${highlight ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 dark:bg-gray-800/50 border-gray-100 dark:border-gray-800'}`}>
+      <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{label}</p>
+      <p className={`text-xl font-bold ${highlight ? 'text-blue-700 dark:text-blue-300' : 'text-gray-900 dark:text-white'}`}>{value}</p>
+      {sub && <p className="text-xs text-gray-400 dark:text-gray-400 mt-0.5">{sub}</p>}
     </div>
   )
 }
@@ -93,7 +93,7 @@ function LumpsumTab() {
   return (
     <div className="space-y-6">
       <div className="card">
-        <h3 className="text-sm font-semibold text-gray-700 mb-4">Lumpsum Investment</h3>
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">Lumpsum Investment</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <InputField label="Initial Amount (₹)" value={amount} onChange={setAmount} min={1000} prefix="₹" />
           <InputField label="Expected Return (%)" value={rate} onChange={setRate} min={1} max={50} step={0.5} />
@@ -110,13 +110,13 @@ function LumpsumTab() {
           </button>
         </div>
         {error && (
-          <p className="mt-3 text-xs text-red-600">{error}</p>
+          <p className="mt-3 text-xs text-red-600 dark:text-red-400">{error}</p>
         )}
       </div>
 
       {result && (
         <div className="card">
-          <h3 className="text-sm font-semibold text-gray-700 mb-4">Results</h3>
+          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">Results</h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
             <KpiCard label="Future Value" value={formatINR(result.future_value)} highlight />
             <KpiCard label="Total Gain" value={formatINR(result.total_gain)} />
@@ -178,7 +178,7 @@ function SipTab() {
   return (
     <div className="space-y-6">
       <div className="card">
-        <h3 className="text-sm font-semibold text-gray-700 mb-4">SIP Calculator</h3>
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">SIP Calculator</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <InputField label="Monthly Amount (₹)" value={monthly} onChange={setMonthly} min={500} prefix="₹" />
           <InputField label="Expected Return (%)" value={rate} onChange={setRate} min={1} max={50} step={0.5} />
@@ -195,13 +195,13 @@ function SipTab() {
           </button>
         </div>
         {error && (
-          <p className="mt-3 text-xs text-red-600">{error}</p>
+          <p className="mt-3 text-xs text-red-600 dark:text-red-400">{error}</p>
         )}
       </div>
 
       {result && (
         <div className="card space-y-4">
-          <h3 className="text-sm font-semibold text-gray-700">Results</h3>
+          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Results</h3>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <KpiCard label="Total Invested" value={formatINR(result.total_invested)} />
             <KpiCard label="Future Value" value={formatINR(result.future_value)} highlight />
@@ -209,17 +209,17 @@ function SipTab() {
             <KpiCard label="Wealth Ratio" value={`${result.wealth_ratio.toFixed(2)}x`} />
           </div>
           <div>
-            <div className="flex justify-between text-xs text-gray-500 mb-1">
+            <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
               <span>Invested: {formatINR(result.total_invested)}</span>
               <span>Gains: {formatINR(result.total_gain)}</span>
             </div>
-            <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
+            <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-3 overflow-hidden">
               <div
                 className="bg-green-500 h-3 rounded-full transition-all duration-500"
                 style={{ width: `${progressPct}%` }}
               />
             </div>
-            <p className="text-xs text-gray-400 mt-1 text-right">
+            <p className="text-xs text-gray-400 dark:text-gray-400 mt-1 text-right">
               Invested portion: {progressPct.toFixed(1)}% of future value
             </p>
           </div>
@@ -273,7 +273,7 @@ function RetirementTab() {
   return (
     <div className="space-y-6">
       <div className="card">
-        <h3 className="text-sm font-semibold text-gray-700 mb-4">Retirement Planning</h3>
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">Retirement Planning</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <InputField label="Current Age" value={currentAge} onChange={setCurrentAge} min={18} max={60} />
           <InputField label="Retirement Age" value={retirementAge} onChange={setRetirementAge} min={40} max={80} />
@@ -293,7 +293,7 @@ function RetirementTab() {
           </button>
         </div>
         {error && (
-          <p className="mt-3 text-xs text-red-600">{error}</p>
+          <p className="mt-3 text-xs text-red-600 dark:text-red-400">{error}</p>
         )}
       </div>
 
@@ -301,7 +301,7 @@ function RetirementTab() {
         <div className="space-y-4">
           {/* Large corpus card */}
           <div className="card bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200">
-            <p className="text-sm text-blue-600 font-medium">Corpus Needed at Retirement</p>
+            <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">Corpus Needed at Retirement</p>
             <p className="text-4xl font-bold text-blue-900 mt-2">{formatINR(result.corpus_needed)}</p>
             <p className="text-xs text-blue-400 mt-1">
               To sustain {corpusYears} years of post-retirement expenses
@@ -341,15 +341,15 @@ export default function GoalCalculatorPage() {
 
   return (
     <div className="p-6 space-y-4">
-      <div className="flex gap-1 border-b border-gray-200">
+      <div className="flex gap-1 border-b border-gray-200 dark:border-gray-700">
         {tabs.map(t => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
             className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
               tab === t.id
-                ? 'border border-b-white border-gray-200 bg-white text-blue-600 -mb-px'
-                : 'text-gray-500 hover:text-gray-700'
+                ? 'border border-b-white border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-blue-600 dark:text-blue-400 -mb-px'
+                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
             }`}
           >
             {t.label}

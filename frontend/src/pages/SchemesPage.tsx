@@ -62,19 +62,19 @@ export default function SchemesPage() {
       <div className="card">
         <div className="flex flex-wrap gap-3">
           <div className="relative flex-1 min-w-[200px]">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-400" />
             <input
               type="text"
               placeholder="Search by scheme name or AMFI code..."
               value={searchInput}
               onChange={(e) => { setSearchInput(e.target.value); setPage(1) }}
-              className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-9 pr-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
           <select
             value={selectedAmc}
             onChange={(e) => { setSelectedAmc(e.target.value); setPage(1) }}
-            className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[180px]"
+            className="border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[180px]"
           >
             <option value="">All AMCs</option>
             {amcs?.map((a) => <option key={a} value={a}>{a}</option>)}
@@ -82,7 +82,7 @@ export default function SchemesPage() {
           <select
             value={selectedCategory}
             onChange={(e) => { setSelectedCategory(e.target.value); setPage(1) }}
-            className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[220px]"
+            className="border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[220px]"
           >
             <option value="">All Categories</option>
             {categories?.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -90,7 +90,7 @@ export default function SchemesPage() {
           <select
             value={selectedPlan}
             onChange={(e) => { setSelectedPlan(e.target.value); setPage(1) }}
-            className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">All Plans</option>
             <option value="Direct">Direct</option>
@@ -108,7 +108,7 @@ export default function SchemesPage() {
           </button>
         </div>
         {data && (
-          <p className="text-xs text-gray-400 mt-2">{data.total.toLocaleString('en-IN')} schemes found</p>
+          <p className="text-xs text-gray-400 dark:text-gray-400 mt-2">{data.total.toLocaleString('en-IN')} schemes found</p>
         )}
       </div>
 
@@ -117,7 +117,7 @@ export default function SchemesPage() {
         {isLoading ? <Spinner /> : !data?.items.length ? <EmptyState /> : (
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-100">
+              <thead className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
                 <tr>
                   <th className="table-header">AMFI Code</th>
                   <th className="table-header">Scheme Name</th>
@@ -133,25 +133,25 @@ export default function SchemesPage() {
                 {data.items.map((s) => (
                   <tr
                     key={s.id}
-                    className="border-b border-gray-50 hover:bg-blue-50 cursor-pointer transition-colors"
+                    className="border-b border-gray-50 hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer transition-colors"
                     onClick={() => navigate(`/schemes/${s.amfi_code}`)}
                   >
-                    <td className="table-cell font-mono text-blue-600">{s.amfi_code}</td>
+                    <td className="table-cell font-mono text-blue-600 dark:text-blue-400">{s.amfi_code}</td>
                     <td className="table-cell max-w-[260px]">
-                      <span className="block truncate text-gray-900 font-medium" title={s.scheme_name}>{s.scheme_name}</span>
+                      <span className="block truncate text-gray-900 dark:text-white font-medium" title={s.scheme_name}>{s.scheme_name}</span>
                     </td>
-                    <td className="table-cell text-gray-500 max-w-[160px]">
+                    <td className="table-cell text-gray-500 dark:text-gray-400 max-w-[160px]">
                       <span className="block truncate">{s.amc_name || '—'}</span>
                     </td>
-                    <td className="table-cell text-gray-500 max-w-[160px]">
+                    <td className="table-cell text-gray-500 dark:text-gray-400 max-w-[160px]">
                       <span className="block truncate text-xs">{s.scheme_category || '—'}</span>
                     </td>
                     <td className="table-cell">
                       {s.plan_type === 'Direct' && <Badge label="Direct" variant="blue" />}
                       {s.plan_type === 'Regular' && <Badge label="Regular" variant="gray" />}
                     </td>
-                    <td className="table-cell text-xs text-gray-500">{s.option_type || '—'}</td>
-                    <td className="table-cell font-mono text-xs text-gray-400">{s.isin_div_payout_growth || '—'}</td>
+                    <td className="table-cell text-xs text-gray-500 dark:text-gray-400">{s.option_type || '—'}</td>
+                    <td className="table-cell font-mono text-xs text-gray-400 dark:text-gray-400">{s.isin_div_payout_growth || '—'}</td>
                     <td className="table-cell">
                       <Badge label={s.is_active === 'Y' ? 'Active' : 'Inactive'} variant={statusBadgeVariant(s.is_active)} />
                     </td>
@@ -163,8 +163,8 @@ export default function SchemesPage() {
         )}
         {/* Pagination */}
         {data && data.total_pages > 1 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
-            <p className="text-xs text-gray-500">Page {data.page} of {data.total_pages}</p>
+          <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 dark:border-gray-800">
+            <p className="text-xs text-gray-500 dark:text-gray-400">Page {data.page} of {data.total_pages}</p>
             <div className="flex gap-2">
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}

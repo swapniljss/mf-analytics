@@ -5,6 +5,21 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Mutual Fund Analytics</title>
+    <script>
+      // Set dark class BEFORE React mounts to prevent flash of light UI.
+      // Reads localStorage first; falls back to OS preference.
+      (function () {
+        try {
+          var stored = localStorage.getItem('mf:dark-mode');
+          var dark =
+            stored === '1' ||
+            (stored !== '0' &&
+              window.matchMedia &&
+              window.matchMedia('(prefers-color-scheme: dark)').matches);
+          if (dark) document.documentElement.classList.add('dark');
+        } catch (e) { /* private mode / disabled storage — ignore */ }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

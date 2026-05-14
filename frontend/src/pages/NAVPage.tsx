@@ -53,18 +53,18 @@ export default function NAVPage() {
       <div className="card">
         <div className="flex flex-wrap gap-3 items-center">
           <div className="relative flex-1 min-w-[220px]">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-400" />
             <input
               type="text"
               placeholder="Search scheme name..."
               value={searchInput}
               onChange={(e) => { setSearchInput(e.target.value); setPage(1) }}
-              className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-9 pr-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
           <div className="flex items-center gap-2">
             {latestDate?.latest_nav_date && (
-              <span className="text-xs text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full">
+              <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-3 py-1.5 rounded-full">
                 Latest: {formatDate(latestDate.latest_nav_date)}
               </span>
             )}
@@ -80,14 +80,14 @@ export default function NAVPage() {
             </button>
           </div>
         </div>
-        {data && <p className="text-xs text-gray-400 mt-2">{data.total.toLocaleString('en-IN')} records</p>}
+        {data && <p className="text-xs text-gray-400 dark:text-gray-400 mt-2">{data.total.toLocaleString('en-IN')} records</p>}
       </div>
 
       <div className="card p-0 overflow-hidden">
         {isLoading ? <Spinner /> : !data?.items.length ? <EmptyState message="No NAV data — click Fetch Today's NAV" /> : (
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-100">
+              <thead className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
                 <tr>
                   <th className="table-header">AMFI Code</th>
                   <th className="table-header">Scheme Name</th>
@@ -99,17 +99,17 @@ export default function NAVPage() {
               </thead>
               <tbody>
                 {data.items.map((nav) => (
-                  <tr key={nav.id} className="border-b border-gray-50 hover:bg-gray-50">
-                    <td className="table-cell font-mono text-blue-600 text-xs">{nav.amfi_code}</td>
+                  <tr key={nav.id} className="border-b border-gray-50 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                    <td className="table-cell font-mono text-blue-600 dark:text-blue-400 text-xs">{nav.amfi_code}</td>
                     <td className="table-cell max-w-[280px]">
                       <span className="block truncate">{nav.scheme_name}</span>
                     </td>
-                    <td className="table-cell text-gray-500 max-w-[180px]">
+                    <td className="table-cell text-gray-500 dark:text-gray-400 max-w-[180px]">
                       <span className="block truncate text-xs">{nav.fund_house || '—'}</span>
                     </td>
-                    <td className="table-cell font-mono text-xs text-gray-400">{nav.isin_div_payout_growth || '—'}</td>
-                    <td className="table-cell text-right font-semibold text-gray-900">{formatNAV(nav.nav)}</td>
-                    <td className="table-cell text-right text-gray-500">{formatDate(nav.nav_date)}</td>
+                    <td className="table-cell font-mono text-xs text-gray-400 dark:text-gray-400">{nav.isin_div_payout_growth || '—'}</td>
+                    <td className="table-cell text-right font-semibold text-gray-900 dark:text-white">{formatNAV(nav.nav)}</td>
+                    <td className="table-cell text-right text-gray-500 dark:text-gray-400">{formatDate(nav.nav_date)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -117,8 +117,8 @@ export default function NAVPage() {
           </div>
         )}
         {data && data.total_pages > 1 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
-            <p className="text-xs text-gray-500">Page {data.page} of {data.total_pages}</p>
+          <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 dark:border-gray-800">
+            <p className="text-xs text-gray-500 dark:text-gray-400">Page {data.page} of {data.total_pages}</p>
             <div className="flex gap-2">
               <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="btn-secondary disabled:opacity-40 py-1.5 px-3 text-xs">Previous</button>
               <button onClick={() => setPage((p) => Math.min(data.total_pages, p + 1))} disabled={page === data.total_pages} className="btn-secondary disabled:opacity-40 py-1.5 px-3 text-xs">Next</button>

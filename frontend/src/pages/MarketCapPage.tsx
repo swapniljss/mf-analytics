@@ -71,8 +71,8 @@ export default function MarketCapPage() {
       {/* Upload card */}
       <div className="card space-y-3">
         <div>
-          <h3 className="text-sm font-semibold text-gray-700">Upload Market Cap Categorization</h3>
-          <p className="text-xs text-gray-400 mt-0.5">
+          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Upload Market Cap Categorization</h3>
+          <p className="text-xs text-gray-400 dark:text-gray-400 mt-0.5">
             Source: <span className="font-mono">AverageMarketCapitalizationDDMmmYYYY.xlsx</span> from
             AMFI (quarterly, ~5,000 companies). The effective date is read automatically from the
             file title row — no need to enter it manually.
@@ -81,8 +81,8 @@ export default function MarketCapPage() {
 
         <div className="flex flex-wrap gap-3 items-end">
           <div className="flex-1 min-w-[260px]">
-            <label className="text-xs text-gray-500 block mb-1">
-              Excel File <span className="text-gray-400">(.xlsx)</span>
+            <label className="text-xs text-gray-500 dark:text-gray-400 block mb-1">
+              Excel File <span className="text-gray-400 dark:text-gray-400">(.xlsx)</span>
             </label>
             <input
               type="file"
@@ -92,21 +92,21 @@ export default function MarketCapPage() {
                 setUploadResult(null)
                 setUploadError(null)
               }}
-              className="block w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700
+              className="block w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-700 dark:text-gray-300
                          file:mr-3 file:py-1 file:px-3 file:rounded file:border-0
                          file:text-xs file:font-medium file:bg-blue-50 file:text-blue-700
                          hover:file:bg-blue-100"
             />
           </div>
           <div>
-            <label className="text-xs text-gray-500 block mb-1">
-              Override Date <span className="text-gray-400">(optional)</span>
+            <label className="text-xs text-gray-500 dark:text-gray-400 block mb-1">
+              Override Date <span className="text-gray-400 dark:text-gray-400">(optional)</span>
             </label>
             <input
               type="date"
               value={overrideDate}
               onChange={(e) => setOverrideDate(e.target.value)}
-              className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
           <button
@@ -136,21 +136,21 @@ export default function MarketCapPage() {
 
       {/* Filters + Table */}
       <div className="card p-0 overflow-hidden">
-        <div className="flex flex-wrap gap-3 p-4 border-b border-gray-100">
+        <div className="flex flex-wrap gap-3 p-4 border-b border-gray-100 dark:border-gray-800">
           <div className="relative flex-1 min-w-[200px]">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-400" />
             <input
               type="text"
               placeholder="Search company name…"
               value={searchInput}
               onChange={(e) => { setSearchInput(e.target.value); setPage(1) }}
-              className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-9 pr-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
           <select
             value={bucket}
             onChange={(e) => { setBucket(e.target.value); setPage(1) }}
-            className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">All Buckets</option>
             <option value="Large Cap">Large Cap (Top 100)</option>
@@ -158,7 +158,7 @@ export default function MarketCapPage() {
             <option value="Small Cap">Small Cap (251+)</option>
           </select>
           {data?.total != null && (
-            <span className="self-center text-xs text-gray-400">{data.total.toLocaleString('en-IN')} companies</span>
+            <span className="self-center text-xs text-gray-400 dark:text-gray-400">{data.total.toLocaleString('en-IN')} companies</span>
           )}
         </div>
 
@@ -169,7 +169,7 @@ export default function MarketCapPage() {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-100">
+              <thead className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
                 <tr>
                   <th className="table-header w-12">#</th>
                   <th className="table-header">Company</th>
@@ -187,17 +187,17 @@ export default function MarketCapPage() {
                   bse_symbol?: string; nse_symbol?: string; avg_market_cap_cr?: number;
                   market_cap_bucket?: string; effective_date?: string;
                 }) => (
-                  <tr key={r.id} className="border-b border-gray-50 hover:bg-gray-50">
-                    <td className="table-cell text-gray-400 tabular-nums">{r.rank_number}</td>
+                  <tr key={r.id} className="border-b border-gray-50 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                    <td className="table-cell text-gray-400 dark:text-gray-400 tabular-nums">{r.rank_number}</td>
                     <td className="table-cell max-w-[240px]">
-                      <span className="block truncate font-medium text-gray-900" title={r.company_name}>
+                      <span className="block truncate font-medium text-gray-900 dark:text-white" title={r.company_name}>
                         {r.company_name}
                       </span>
                     </td>
-                    <td className="table-cell font-mono text-xs text-gray-400">{r.isin || '—'}</td>
-                    <td className="table-cell text-xs text-gray-500">{r.bse_symbol || '—'}</td>
-                    <td className="table-cell text-xs text-gray-500">{r.nse_symbol || '—'}</td>
-                    <td className="table-cell text-right font-semibold text-gray-800">
+                    <td className="table-cell font-mono text-xs text-gray-400 dark:text-gray-400">{r.isin || '—'}</td>
+                    <td className="table-cell text-xs text-gray-500 dark:text-gray-400">{r.bse_symbol || '—'}</td>
+                    <td className="table-cell text-xs text-gray-500 dark:text-gray-400">{r.nse_symbol || '—'}</td>
+                    <td className="table-cell text-right font-semibold text-gray-800 dark:text-gray-200">
                       {formatCr(r.avg_market_cap_cr)}
                     </td>
                     <td className="table-cell">
@@ -208,7 +208,7 @@ export default function MarketCapPage() {
                         />
                       )}
                     </td>
-                    <td className="table-cell text-gray-400 text-xs">{formatDate(r.effective_date)}</td>
+                    <td className="table-cell text-gray-400 dark:text-gray-400 text-xs">{formatDate(r.effective_date)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -217,8 +217,8 @@ export default function MarketCapPage() {
         )}
 
         {data && data.total > 100 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
-            <p className="text-xs text-gray-500">
+          <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 dark:border-gray-800">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
               Page {page} — showing {Math.min(page * 100, data.total).toLocaleString('en-IN')} of {data.total.toLocaleString('en-IN')}
             </p>
             <div className="flex gap-2">

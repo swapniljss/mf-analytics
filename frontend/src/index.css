@@ -3,43 +3,332 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    /* Slightly compressed base font size — every rem-based Tailwind utility
+       renders at ~87.5% of the browser default. Subtle density bump from
+       the browser default 16px without feeling tight. */
+    font-size: 14px;
+    font-feature-settings: 'cv11', 'ss01';
+  }
   body {
-    @apply bg-gray-50 text-gray-900 antialiased;
+    @apply text-gray-900 antialiased dark:text-gray-100;
+    background:
+      radial-gradient(1200px 600px at 100% -10%, rgba(168, 85, 247, 0.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 10%, rgba(59, 130, 246, 0.10), transparent 60%),
+      linear-gradient(180deg, #f8fafc 0%, #f4f6fb 100%);
+    background-attachment: fixed;
+    min-height: 100vh;
+  }
+  .dark body {
+    background:
+      radial-gradient(1200px 600px at 100% -10%, rgba(168, 85, 247, 0.18), transparent 60%),
+      radial-gradient(900px 500px at -10% 10%, rgba(59, 130, 246, 0.18), transparent 60%),
+      linear-gradient(180deg, #0b1020 0%, #0a0f1e 100%);
+  }
+  *::selection {
+    background-color: rgba(124, 58, 237, 0.18);
+  }
+  .dark *::selection {
+    background-color: rgba(167, 139, 250, 0.28);
+  }
+
+  /* Tell the browser to render native UI (form controls, scrollbars,
+     date pickers) using its dark color scheme when .dark is on <html>. */
+  :root.dark {
+    color-scheme: dark;
+  }
+
+  /* Fallback dark styling for native form controls that have no explicit
+     Tailwind bg/text class. Wrapped in :where() so specificity stays at
+     (0,1,0) — any inline `dark:bg-...` / `dark:text-...` utility wins. */
+  .dark :where(input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):not([type='color']):not([type='submit']):not([type='button']):not([type='reset'])),
+  .dark :where(select),
+  .dark :where(textarea) {
+    background-color: rgba(31, 41, 55, 0.6);   /* gray-800/60 */
+    color: rgb(243, 244, 246);                  /* gray-100 */
+    border-color: rgb(55, 65, 81);              /* gray-700 */
+  }
+  .dark :where(input)::placeholder,
+  .dark :where(textarea)::placeholder {
+    color: rgb(156, 163, 175);                  /* gray-400 — bright enough to read */
+    opacity: 1;
+  }
+  /* Native <option> elements inside <select> dropdowns. Browsers vary in
+     how much they let us style these, but Chrome / Edge honour bg + color. */
+  .dark :where(select) option {
+    background-color: rgb(17, 24, 39);          /* gray-900 */
+    color: rgb(243, 244, 246);                  /* gray-100 */
+  }
+  /* Calendar / time picker icons need inverting to be visible in dark mode. */
+  .dark input[type='date']::-webkit-calendar-picker-indicator,
+  .dark input[type='time']::-webkit-calendar-picker-indicator,
+  .dark input[type='month']::-webkit-calendar-picker-indicator,
+  .dark input[type='datetime-local']::-webkit-calendar-picker-indicator {
+    filter: invert(0.85);
   }
 }
 
 @layer components {
+  /* ====== Cards ====== */
   .card {
-    @apply bg-white rounded-xl shadow-sm border border-gray-100 p-6;
+    @apply bg-white/90 backdrop-blur-xl rounded-2xl border border-gray-200/70 shadow-soft p-6
+           transition-all duration-300 ease-out
+           hover:shadow-soft-lg hover:-translate-y-0.5 hover:border-blue-200/70
+           dark:bg-gray-900/70 dark:border-gray-800/70
+           dark:hover:border-blue-700/40;
   }
+  .card-flat {
+    @apply bg-white rounded-2xl border border-gray-200 shadow-sm p-6
+           dark:bg-gray-900 dark:border-gray-800;
+  }
+  .card-chrome {
+    @apply bg-white/80 backdrop-blur-xl border border-gray-200/60 shadow-soft
+           dark:bg-gray-900/70 dark:border-gray-800/60;
+  }
+
+  /* ====== Buttons ====== */
   .btn-primary {
-    @apply bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors;
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold
+           text-white bg-gradient-to-r from-blue-600 to-purple-600
+           hover:from-blue-700 hover:to-purple-700
+           shadow-glow transition-all duration-200
+           active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed;
   }
   .btn-secondary {
-    @apply bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors;
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-medium
+           text-gray-700 bg-white border border-gray-200
+           hover:bg-gray-50 hover:border-gray-300
+           transition-colors duration-200
+           disabled:opacity-60 disabled:cursor-not-allowed
+           dark:text-gray-200 dark:bg-gray-800 dark:border-gray-700
+           dark:hover:bg-gray-700 dark:hover:border-gray-600;
   }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium
+           text-gray-600 hover:text-gray-900 hover:bg-gray-100
+           transition-colors
+           dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-800;
+  }
+
+  /* ====== Badges ====== */
   .badge {
-    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ring-1;
   }
   .badge-green {
-    @apply badge bg-green-100 text-green-800;
+    @apply badge bg-emerald-50 text-emerald-700 ring-emerald-200
+           dark:bg-emerald-900/30 dark:text-emerald-300 dark:ring-emerald-700/50;
   }
   .badge-red {
-    @apply badge bg-red-100 text-red-800;
+    @apply badge bg-rose-50 text-rose-700 ring-rose-200
+           dark:bg-rose-900/30 dark:text-rose-300 dark:ring-rose-700/50;
   }
   .badge-yellow {
-    @apply badge bg-yellow-100 text-yellow-800;
+    @apply badge bg-amber-50 text-amber-700 ring-amber-200
+           dark:bg-amber-900/30 dark:text-amber-300 dark:ring-amber-700/50;
   }
   .badge-blue {
-    @apply badge bg-blue-100 text-blue-800;
+    @apply badge bg-blue-50 text-blue-700 ring-blue-200
+           dark:bg-blue-900/30 dark:text-blue-300 dark:ring-blue-700/50;
   }
   .badge-gray {
-    @apply badge bg-gray-100 text-gray-700;
+    @apply badge bg-gray-100 text-gray-700 ring-gray-200
+           dark:bg-gray-800 dark:text-gray-300 dark:ring-gray-700;
   }
+
+  /* ====== Tables ====== */
   .table-header {
-    @apply text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-3;
+    @apply text-left text-[11px] font-semibold uppercase tracking-wider px-4 py-3
+           text-gray-500 dark:text-blue-300/80;
   }
   .table-cell {
-    @apply px-4 py-3 text-sm text-gray-700 whitespace-nowrap;
+    @apply px-4 py-3 text-sm text-gray-700 whitespace-nowrap dark:text-gray-300;
   }
+  .table-wrap {
+    @apply bg-white/90 backdrop-blur-xl rounded-2xl border border-gray-200/70 shadow-soft overflow-hidden
+           dark:bg-gray-900/70 dark:border-gray-800/70;
+  }
+  .table-modern {
+    @apply w-full text-sm;
+  }
+  .table-modern thead {
+    @apply bg-gray-50/80 dark:bg-gray-800/50;
+  }
+  .table-modern tbody tr {
+    @apply border-t border-gray-100 hover:bg-blue-50/30 transition-colors
+           dark:border-gray-800 dark:hover:bg-blue-900/10;
+  }
+
+  /* ====== Inputs ====== */
+  .input-modern {
+    @apply w-full h-10 px-3.5 rounded-xl border border-gray-200 bg-white/80
+           text-sm text-gray-800 placeholder-gray-400
+           focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500
+           transition-all duration-200
+           dark:border-gray-700 dark:bg-gray-800/60 dark:text-gray-100 dark:placeholder-gray-500;
+  }
+  .select-modern {
+    @apply h-10 px-3 pr-8 rounded-xl border border-gray-200 bg-white/80 text-sm text-gray-800
+           focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500
+           transition-all duration-200 cursor-pointer
+           dark:border-gray-700 dark:bg-gray-800/60 dark:text-gray-100;
+  }
+  .label-modern {
+    @apply text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block
+           dark:text-gray-400;
+  }
+
+  /* ====== Glass surfaces ====== */
+  .glass-chrome {
+    @apply bg-white/75 backdrop-blur-xl border border-gray-200/60 shadow-soft
+           dark:bg-gray-900/70 dark:border-gray-800/60;
+  }
+
+  /* ====== Gradient hero text ====== */
+  .gradient-text {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-slate-900 via-blue-900 to-purple-900
+           dark:from-blue-200 dark:via-purple-200 dark:to-pink-200;
+  }
+  .gradient-text-blue {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600
+           dark:from-blue-400 dark:to-purple-400;
+  }
+  .gradient-text-success {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 to-green-600
+           dark:from-emerald-400 dark:to-green-400;
+  }
+  .gradient-text-warm {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-orange-600 to-rose-600
+           dark:from-orange-400 dark:to-rose-400;
+  }
+
+  /* ====== Decorative blob (place inside relative+overflow-hidden parent) ====== */
+  .blob-violet {
+    @apply pointer-events-none absolute -top-12 -right-12 w-44 h-44 rounded-full blur-3xl;
+    background: radial-gradient(closest-side, rgba(139, 92, 246, 0.18), transparent 70%);
+  }
+  .dark .blob-violet {
+    background: radial-gradient(closest-side, rgba(167, 139, 250, 0.22), transparent 70%);
+  }
+  .blob-blue {
+    @apply pointer-events-none absolute -top-12 -left-12 w-44 h-44 rounded-full blur-3xl;
+    background: radial-gradient(closest-side, rgba(59, 130, 246, 0.18), transparent 70%);
+  }
+  .dark .blob-blue {
+    background: radial-gradient(closest-side, rgba(96, 165, 250, 0.22), transparent 70%);
+  }
+  .blob-white {
+    @apply pointer-events-none absolute top-0 right-0 w-32 h-32 bg-white/15 rounded-full blur-3xl;
+  }
+
+  /* ====== Shine sweep on hover (place on a relative+overflow-hidden parent) ====== */
+  .shine-on-hover {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+  }
+  .shine-on-hover::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      120deg,
+      transparent 30%,
+      rgba(255, 255, 255, 0.22) 50%,
+      transparent 70%
+    );
+    transform: translateX(-150%);
+    transition: transform 0.9s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+    z-index: 1;
+  }
+  .shine-on-hover:hover::after {
+    transform: translateX(150%);
+  }
+
+  /* ====== Progress bar shimmer overlay (used by Top AMCs bars) ====== */
+  .bar-fill {
+    position: relative;
+    overflow: hidden;
+  }
+  .bar-fill::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.35) 50%,
+      transparent 100%
+    );
+    animation: bar-shimmer 2.4s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  /* ====== Animated underline on hover (for inline links/labels) ====== */
+  .underline-grow {
+    position: relative;
+  }
+  .underline-grow::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: -2px;
+    height: 2px;
+    width: 100%;
+    background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.35s ease;
+  }
+  .underline-grow:hover::after {
+    transform: scaleX(1);
+  }
+
+  /* ====== Stagger helper ====== */
+  .stagger-children > * {
+    opacity: 0;
+    animation: fade-in-up 0.45s ease-out forwards;
+  }
+  .stagger-children > *:nth-child(1) { animation-delay: 40ms; }
+  .stagger-children > *:nth-child(2) { animation-delay: 100ms; }
+  .stagger-children > *:nth-child(3) { animation-delay: 160ms; }
+  .stagger-children > *:nth-child(4) { animation-delay: 220ms; }
+  .stagger-children > *:nth-child(5) { animation-delay: 280ms; }
+  .stagger-children > *:nth-child(6) { animation-delay: 340ms; }
+  .stagger-children > *:nth-child(7) { animation-delay: 400ms; }
+  .stagger-children > *:nth-child(8) { animation-delay: 460ms; }
 }
+
+/* ====== Skeleton shimmer ====== */
+.skeleton-bar {
+  background: linear-gradient(
+    90deg,
+    rgba(229, 231, 235, 0.7) 0%,
+    rgba(243, 244, 246, 1) 50%,
+    rgba(229, 231, 235, 0.7) 100%
+  );
+  background-size: 800px 100%;
+  animation: shimmer 1.6s linear infinite;
+}
+.dark .skeleton-bar {
+  background: linear-gradient(
+    90deg,
+    rgba(31, 41, 55, 0.7) 0%,
+    rgba(55, 65, 81, 1) 50%,
+    rgba(31, 41, 55, 0.7) 100%
+  );
+  background-size: 800px 100%;
+}
+
+/* ====== Custom scrollbar ====== */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.35);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(100, 116, 139, 0.55); background-clip: content-box; }
+.dark ::-webkit-scrollbar-thumb { background: rgba(71, 85, 105, 0.55); background-clip: content-box; }
+.dark ::-webkit-scrollbar-thumb:hover { background: rgba(100, 116, 139, 0.75); background-clip: content-box; }

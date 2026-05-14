@@ -183,14 +183,14 @@ export default function AnalyticsPage() {
               placeholder="Search schemes..."
               value={searchInput}
               onChange={(e) => { setSearchInput(e.target.value); setPage(1) }}
-              className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[200px]"
+              className="border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[200px]"
             />
             <input
               type="text"
               placeholder="Filter by category..."
               value={categoryInput}
               onChange={(e) => { setCategoryInput(e.target.value); setPage(1) }}
-              className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[200px]"
+              className="border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[200px]"
             />
           </div>
           <button
@@ -204,11 +204,11 @@ export default function AnalyticsPage() {
             {isRefreshing ? 'Refresh in progress…' : refreshMutation.isPending ? 'Refreshing...' : 'Refresh Snapshots'}
           </button>
         </div>
-        <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-gray-400">
+        <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-gray-400 dark:text-gray-400">
           {data && <span>{data.total.toLocaleString('en-IN')} schemes with snapshot data</span>}
           {summary?.latest_snapshot_refreshed_at && (
             <span aria-label="Snapshot freshness">
-              · Last refreshed: <span className="font-medium text-gray-600">{formatRelativeTime(summary.latest_snapshot_refreshed_at)}</span>
+              · Last refreshed: <span className="font-medium text-gray-600 dark:text-gray-300">{formatRelativeTime(summary.latest_snapshot_refreshed_at)}</span>
             </span>
           )}
         </div>
@@ -217,7 +217,7 @@ export default function AnalyticsPage() {
       {/* Data-sync banner — shown when NAV history hasn't been loaded */}
       {summary?.data_status?.needs_history_sync && (
         <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          <AlertTriangle size={16} className="mt-0.5 shrink-0 text-amber-500" />
+          <AlertTriangle size={16} className="mt-0.5 shrink-0 text-amber-500 dark:text-amber-400" />
           <div>
             <span className="font-semibold">Return data not yet loaded.</span>{' '}
             {summary.schemes_with_returns != null && (
@@ -237,7 +237,7 @@ export default function AnalyticsPage() {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
-              <thead className="bg-gray-50 border-b border-gray-100">
+              <thead className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
                 <tr>
                   <th className="table-header">Scheme</th>
                   <th className="table-header">NAV</th>
@@ -254,14 +254,14 @@ export default function AnalyticsPage() {
               </thead>
               <tbody>
                 {data.items.map((s) => (
-                  <tr key={s.id} className="border-b border-gray-50 hover:bg-gray-50">
+                  <tr key={s.id} className="border-b border-gray-50 hover:bg-gray-50 dark:hover:bg-gray-800/50">
                     <td className="table-cell max-w-[220px]">
-                      <span className="block truncate font-medium text-gray-900">{s.scheme_name}</span>
-                      <span className="text-gray-400">{s.amc_name}</span>
+                      <span className="block truncate font-medium text-gray-900 dark:text-white">{s.scheme_name}</span>
+                      <span className="text-gray-400 dark:text-gray-400">{s.amc_name}</span>
                     </td>
                     <td className="table-cell">
                       <span className="font-medium">{formatNAV(s.latest_nav)}</span>
-                      <span className="block text-gray-400">{formatDate(s.nav_date)}</span>
+                      <span className="block text-gray-400 dark:text-gray-400">{formatDate(s.nav_date)}</span>
                     </td>
                     {(['return_1w', 'return_1m', 'return_3m', 'return_6m', 'return_1y', 'return_3y', 'return_5y'] as const).map((key) => (
                       <td key={key} className={`table-cell text-right font-medium ${returnColor(s[key])}`}>
@@ -277,8 +277,8 @@ export default function AnalyticsPage() {
           </div>
         )}
         {data && data.total_pages > 1 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
-            <p className="text-xs text-gray-500">Page {data.page} of {data.total_pages}</p>
+          <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 dark:border-gray-800">
+            <p className="text-xs text-gray-500 dark:text-gray-400">Page {data.page} of {data.total_pages}</p>
             <div className="flex gap-2">
               <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="btn-secondary disabled:opacity-40 py-1.5 px-3 text-xs">Previous</button>
               <button onClick={() => setPage((p) => Math.min(data.total_pages, p + 1))} disabled={page === data.total_pages} className="btn-secondary disabled:opacity-40 py-1.5 px-3 text-xs">Next</button>

@@ -43,12 +43,12 @@ export default function DisclosurePage() {
   return (
     <div className="p-6 space-y-4">
       {/* Tab Bar */}
-      <div className="flex gap-1 bg-gray-100 p-1 rounded-lg w-fit">
+      <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg w-fit">
         {tabs.map(({ key, label }) => (
           <button
             key={key}
             onClick={() => { setActiveTab(key); setUploadResult(null) }}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === key ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === key ? 'bg-white dark:bg-gray-900 shadow-sm text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
           >
             {label}
           </button>
@@ -57,30 +57,30 @@ export default function DisclosurePage() {
 
       {/* Upload Card */}
       <div className="card">
-        <h3 className="text-sm font-semibold text-gray-700 mb-4">
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">
           Upload {tabs.find((t) => t.key === activeTab)?.label} File
         </h3>
         <div className="space-y-3">
           <div className="flex gap-3 flex-wrap">
             <div>
-              <label className="text-xs text-gray-500 block mb-1">
+              <label className="text-xs text-gray-500 dark:text-gray-400 block mb-1">
                 {activeTab === 'quarterly' ? 'Report Quarter Date' : 'Report Month Date'}
               </label>
               <input
                 type="date"
                 value={uploadDate}
                 onChange={(e) => setUploadDate(e.target.value)}
-                className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
             <div>
-              <label className="text-xs text-gray-500 block mb-1">Excel File (.xls / .xlsx)</label>
+              <label className="text-xs text-gray-500 dark:text-gray-400 block mb-1">Excel File (.xls / .xlsx)</label>
               <input
                 ref={fileRef}
                 type="file"
                 accept=".xls,.xlsx"
                 onChange={(e) => setFile(e.target.files?.[0] || null)}
-                className="border border-gray-200 rounded-lg px-3 py-2 text-sm"
+                className="border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm"
               />
             </div>
           </div>
@@ -93,32 +93,32 @@ export default function DisclosurePage() {
             {uploadMutation.isPending ? 'Uploading...' : 'Upload & Process'}
           </button>
           {uploadResult && (
-            <pre className="bg-gray-50 border border-gray-100 rounded-lg p-3 text-xs text-gray-700 overflow-auto max-h-32">
+            <pre className="bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-lg p-3 text-xs text-gray-700 dark:text-gray-300 overflow-auto max-h-32">
               {uploadResult}
             </pre>
           )}
           {uploadMutation.isError && (
-            <p className="text-sm text-red-600">{(uploadMutation.error as Error).message}</p>
+            <p className="text-sm text-red-600 dark:text-red-400">{(uploadMutation.error as Error).message}</p>
           )}
         </div>
       </div>
 
       {/* Info Card */}
       <div className="card">
-        <h3 className="text-sm font-semibold text-gray-700 mb-3">File Format Guidelines</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-gray-500">
-          <div className="bg-gray-50 rounded-lg p-3">
-            <p className="font-medium text-gray-700 mb-1">Monthly Disclosure</p>
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">File Format Guidelines</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-gray-500 dark:text-gray-400">
+          <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
+            <p className="font-medium text-gray-700 dark:text-gray-300 mb-1">Monthly Disclosure</p>
             <p>AMFI monthly portfolio disclosure Excel. Filename: <code>ammmmyyyyrepo.xls</code></p>
             <p className="mt-1">Example: <code>amfeb2026repo.xls</code></p>
           </div>
-          <div className="bg-gray-50 rounded-lg p-3">
-            <p className="font-medium text-gray-700 mb-1">Sub-Classification</p>
+          <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
+            <p className="font-medium text-gray-700 dark:text-gray-300 mb-1">Sub-Classification</p>
             <p>AMFI sub-classification Excel. Filename: <code>Sub-classification-MmmYY.xlsx</code></p>
             <p className="mt-1">Example: <code>Sub-classification-Feb26.xlsx</code></p>
           </div>
-          <div className="bg-gray-50 rounded-lg p-3">
-            <p className="font-medium text-gray-700 mb-1">Quarterly Disclosure</p>
+          <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
+            <p className="font-medium text-gray-700 dark:text-gray-300 mb-1">Quarterly Disclosure</p>
             <p>AMFI quarterly Excel. Filename: <code>aqu-volyy-issueN.xls</code></p>
             <p className="mt-1">Example: <code>aqu-vol24-issueIV.xls</code></p>
           </div>

@@ -63,7 +63,7 @@ function fmtReturn(v: number | null) {
   if (v == null) return <span className="text-gray-300">—</span>
   const pos = v >= 0
   return (
-    <span className={`flex items-center gap-0.5 font-semibold text-xs ${pos ? 'text-green-600' : 'text-red-500'}`}>
+    <span className={`flex items-center gap-0.5 font-semibold text-xs ${pos ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'}`}>
       {pos ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
       {pos ? '+' : ''}{v.toFixed(2)}%
     </span>
@@ -72,12 +72,12 @@ function fmtReturn(v: number | null) {
 
 function assetColor(ac: string) {
   const map: Record<string, string> = {
-    E: 'bg-purple-100 text-purple-700',
-    C: 'bg-blue-100 text-blue-700',
-    G: 'bg-green-100 text-green-700',
-    A: 'bg-orange-100 text-orange-700',
+    E: 'bg-purple-100 text-purple-700 dark:text-purple-300',
+    C: 'bg-blue-100 text-blue-700 dark:text-blue-300',
+    G: 'bg-green-100 text-green-700 dark:text-green-300',
+    A: 'bg-orange-100 text-orange-700 dark:text-orange-300',
   }
-  return map[ac] ?? 'bg-gray-100 text-gray-500'
+  return map[ac] ?? 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
 }
 
 const PFM_SHORT: Record<string, string> = {
@@ -193,13 +193,13 @@ export default function NPSPage() {
 
       {/* ── Tabs ─────────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="flex gap-1 bg-gray-100 p-1 rounded-lg w-fit">
+        <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg w-fit">
           {tabs.map(({ key, label }) => (
             <button
               key={key}
               onClick={() => { setActiveTab(key); setSearchInput('') }}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                activeTab === key ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'
+                activeTab === key ? 'bg-white dark:bg-gray-900 shadow-sm text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
               }`}
             >
               {label}
@@ -221,7 +221,7 @@ export default function NPSPage() {
 
       {/* ── Refresh result banner ─────────────────────────────────────────── */}
       {refreshMutation.isSuccess && (
-        <div className="flex items-center gap-2 px-4 py-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-700">
+        <div className="flex items-center gap-2 px-4 py-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-700 dark:text-green-300">
           <CheckCircle size={15} />
           Refreshed {(refreshMutation.data as any)?.refreshed ?? '?'} schemes
           {(refreshMutation.data as any)?.errors > 0 && ` · ${(refreshMutation.data as any).errors} errors`}
@@ -234,20 +234,20 @@ export default function NPSPage() {
           <div className="flex flex-wrap gap-3">
             {/* Search */}
             <div className="relative flex-1 min-w-[200px]">
-              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-400" />
               <input
                 type="text"
                 placeholder="Search scheme name…"
                 value={searchInput}
                 onChange={e => setSearchInput(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-9 pr-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
             {/* PFM */}
             <select
               value={pfmCode}
               onChange={e => setPfmCode(e.target.value)}
-              className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">All PFMs</option>
               {(pfms ?? []).map(p => (
@@ -260,7 +260,7 @@ export default function NPSPage() {
             <select
               value={assetClass}
               onChange={e => setAssetClass(e.target.value)}
-              className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">All Assets</option>
               <option value="E">Equity (E)</option>
@@ -272,7 +272,7 @@ export default function NPSPage() {
             <select
               value={tier}
               onChange={e => setTier(e.target.value)}
-              className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">All Tiers</option>
               <option value="I">Tier I</option>
@@ -282,7 +282,7 @@ export default function NPSPage() {
             <select
               value={category}
               onChange={e => setCategory(e.target.value)}
-              className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">All Categories</option>
               {uniqueCategories.map(c => <option key={c} value={c}>{c}</option>)}
@@ -291,14 +291,14 @@ export default function NPSPage() {
             <select
               value={isApy}
               onChange={e => setIsApy(e.target.value)}
-              className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">NPS + APY</option>
               <option value="true">APY Only</option>
               <option value="false">NPS Only</option>
             </select>
           </div>
-          <p className="text-xs text-gray-400 mt-2">
+          <p className="text-xs text-gray-400 dark:text-gray-400 mt-2">
             {activeTab === 'analytics' ? visibleSnaps.length : visibleSchemes.length} records shown
           </p>
         </div>
@@ -310,7 +310,7 @@ export default function NPSPage() {
           {snapLoading ? <Spinner /> : visibleSnaps.length === 0 ? <EmptyState /> : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-gray-50 border-b border-gray-100">
+                <thead className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
                   <tr>
                     <th className="table-header">Scheme</th>
                     <th className="table-header">PFM</th>
@@ -327,17 +327,17 @@ export default function NPSPage() {
                 </thead>
                 <tbody>
                   {visibleSnaps.map(s => (
-                    <tr key={s.scheme_code} className="border-b border-gray-50 hover:bg-gray-50">
+                    <tr key={s.scheme_code} className="border-b border-gray-50 hover:bg-gray-50 dark:hover:bg-gray-800/50">
                       <td className="table-cell max-w-[220px]">
-                        <span className="block truncate font-medium text-gray-900 text-xs" title={s.scheme_name}>
+                        <span className="block truncate font-medium text-gray-900 dark:text-white text-xs" title={s.scheme_name}>
                           {s.scheme_name}
                         </span>
-                        <span className="text-[10px] text-gray-400 font-mono">{s.scheme_code}</span>
+                        <span className="text-[10px] text-gray-400 dark:text-gray-400 font-mono">{s.scheme_code}</span>
                         {s.is_apy === 1 && (
-                          <span className="ml-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-orange-100 text-orange-600">APY</span>
+                          <span className="ml-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-orange-100 text-orange-600 dark:text-orange-400">APY</span>
                         )}
                       </td>
-                      <td className="table-cell text-xs text-gray-500">{PFM_SHORT[s.pfm_code] ?? s.pfm_code}</td>
+                      <td className="table-cell text-xs text-gray-500 dark:text-gray-400">{PFM_SHORT[s.pfm_code] ?? s.pfm_code}</td>
                       <td className="table-cell text-center">
                         {s.asset_class && s.asset_class !== 'NA' && (
                           <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${assetColor(s.asset_class)}`}>
@@ -345,7 +345,7 @@ export default function NPSPage() {
                           </span>
                         )}
                       </td>
-                      <td className="table-cell text-center text-xs text-gray-500">
+                      <td className="table-cell text-center text-xs text-gray-500 dark:text-gray-400">
                         {s.tier && s.tier !== 'NA' ? `T${s.tier}` : '—'}
                       </td>
                       <td className="table-cell text-right font-mono text-xs">
@@ -354,13 +354,13 @@ export default function NPSPage() {
                       <td className="table-cell text-right">{fmtReturn(s.return_1y)}</td>
                       <td className="table-cell text-right">{fmtReturn(s.return_3y)}</td>
                       <td className="table-cell text-right">{fmtReturn(s.return_5y)}</td>
-                      <td className="table-cell text-right text-xs font-semibold text-gray-700">
+                      <td className="table-cell text-right text-xs font-semibold text-gray-700 dark:text-gray-300">
                         {s.sharpe_ratio != null ? Number(s.sharpe_ratio).toFixed(2) : '—'}
                       </td>
-                      <td className="table-cell text-right text-xs font-semibold text-red-500">
+                      <td className="table-cell text-right text-xs font-semibold text-red-500 dark:text-red-400">
                         {s.max_drawdown != null ? `-${Number(s.max_drawdown).toFixed(2)}%` : '—'}
                       </td>
-                      <td className="table-cell text-center text-xs text-gray-500">
+                      <td className="table-cell text-center text-xs text-gray-500 dark:text-gray-400">
                         {s.category_rank != null && s.category_count != null
                           ? `#${s.category_rank}/${s.category_count}`
                           : '—'}
@@ -380,7 +380,7 @@ export default function NPSPage() {
           {schemesLoading ? <Spinner /> : visibleSchemes.length === 0 ? <EmptyState /> : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-gray-50 border-b border-gray-100">
+                <thead className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
                   <tr>
                     <th className="table-header">Scheme Code</th>
                     <th className="table-header">Scheme Name</th>
@@ -395,14 +395,14 @@ export default function NPSPage() {
                 </thead>
                 <tbody>
                   {visibleSchemes.map(s => (
-                    <tr key={s.scheme_code} className="border-b border-gray-50 hover:bg-gray-50">
-                      <td className="table-cell font-mono text-blue-600 text-xs">{s.scheme_code}</td>
+                    <tr key={s.scheme_code} className="border-b border-gray-50 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                      <td className="table-cell font-mono text-blue-600 dark:text-blue-400 text-xs">{s.scheme_code}</td>
                       <td className="table-cell max-w-[260px]">
-                        <span className="block truncate text-gray-900 font-medium text-xs" title={s.scheme_name}>
+                        <span className="block truncate text-gray-900 dark:text-white font-medium text-xs" title={s.scheme_name}>
                           {s.scheme_name}
                         </span>
                       </td>
-                      <td className="table-cell text-xs text-gray-500">{PFM_SHORT[s.pfm_code] ?? s.pfm_code}</td>
+                      <td className="table-cell text-xs text-gray-500 dark:text-gray-400">{PFM_SHORT[s.pfm_code] ?? s.pfm_code}</td>
                       <td className="table-cell text-center">
                         {s.asset_class && s.asset_class !== 'NA' && (
                           <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${assetColor(s.asset_class)}`}>
@@ -410,13 +410,13 @@ export default function NPSPage() {
                           </span>
                         )}
                       </td>
-                      <td className="table-cell text-center text-xs text-gray-500">
+                      <td className="table-cell text-center text-xs text-gray-500 dark:text-gray-400">
                         {s.tier && s.tier !== 'NA' ? `T${s.tier}` : '—'}
                       </td>
-                      <td className="table-cell text-xs text-gray-400 max-w-[140px]">
+                      <td className="table-cell text-xs text-gray-400 dark:text-gray-400 max-w-[140px]">
                         <span className="block truncate">{s.category}</span>
                       </td>
-                      <td className="table-cell text-xs text-gray-400">{s.variant || '—'}</td>
+                      <td className="table-cell text-xs text-gray-400 dark:text-gray-400">{s.variant || '—'}</td>
                       <td className="table-cell text-center">
                         {s.is_apy === 1
                           ? <Badge label="APY" variant="yellow" />
@@ -438,21 +438,21 @@ export default function NPSPage() {
       {activeTab === 'upload' && (
         <div className="card max-w-lg space-y-5">
           <div>
-            <h3 className="font-semibold text-gray-900 mb-1">Upload Daily NAV ZIP</h3>
-            <p className="text-sm text-gray-500">
-              Upload a single <code className="bg-gray-100 px-1 rounded text-xs">NAV_File_DDMMYYYY.zip</code> file
+            <h3 className="font-semibold text-gray-900 dark:text-white mb-1">Upload Daily NAV ZIP</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Upload a single <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded text-xs">NAV_File_DDMMYYYY.zip</code> file
               from the NPS Trust website.
             </p>
           </div>
 
           <div className="space-y-3">
             <label className="block">
-              <span className="text-sm font-medium text-gray-700">Select ZIP file</span>
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Select ZIP file</span>
               <input
                 ref={fileRef}
                 type="file"
                 accept=".zip"
-                className="mt-1 block w-full text-sm text-gray-500
+                className="mt-1 block w-full text-sm text-gray-500 dark:text-gray-400
                   file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0
                   file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700
                   hover:file:bg-blue-100"
@@ -471,8 +471,8 @@ export default function NPSPage() {
           {/* Result */}
           {uploadResult && (
             <div className="flex items-start gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
-              <CheckCircle size={16} className="text-green-600 mt-0.5 shrink-0" />
-              <div className="text-sm text-green-700">
+              <CheckCircle size={16} className="text-green-600 dark:text-green-400 mt-0.5 shrink-0" />
+              <div className="text-sm text-green-700 dark:text-green-300">
                 <p className="font-semibold">Upload successful</p>
                 <p className="text-xs mt-0.5">
                   {uploadResult.records} records parsed · {uploadResult.inserted} inserted
@@ -483,8 +483,8 @@ export default function NPSPage() {
           )}
           {uploadError && (
             <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-              <AlertCircle size={16} className="text-red-500 mt-0.5 shrink-0" />
-              <div className="text-sm text-red-600">
+              <AlertCircle size={16} className="text-red-500 dark:text-red-400 mt-0.5 shrink-0" />
+              <div className="text-sm text-red-600 dark:text-red-400">
                 <p className="font-semibold">Upload failed</p>
                 <p className="text-xs mt-0.5">{uploadError}</p>
               </div>

@@ -161,8 +161,8 @@ function SchemeInfoPanel({ amfiCode, benchmarkName }: { amfiCode: string; benchm
         className="w-full flex items-center justify-between"
         onClick={() => setOpen(o => !o)}
       >
-        <h3 className="text-sm font-semibold text-gray-700">Scheme Info</h3>
-        {open ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Scheme Info</h3>
+        {open ? <ChevronUp size={16} className="text-gray-400 dark:text-gray-400" /> : <ChevronDown size={16} className="text-gray-400 dark:text-gray-400" />}
       </button>
 
       {open && (
@@ -183,22 +183,22 @@ function SchemeInfoPanel({ amfiCode, benchmarkName }: { amfiCode: string; benchm
           {!editing && meta && (
             <>
               {allEmpty ? (
-                <p className="text-xs text-gray-400 italic">
+                <p className="text-xs text-gray-400 dark:text-gray-400 italic">
                   No additional details. Use Edit to add fund manager info.
                 </p>
               ) : (
                 <dl className="space-y-2">
                   {filledRows.map(r => (
                     <div key={r.label} className="flex gap-2">
-                      <dt className="w-40 shrink-0 text-xs text-gray-500">{r.label}</dt>
-                      <dd className="text-xs text-gray-900 font-medium">{r.value}</dd>
+                      <dt className="w-40 shrink-0 text-xs text-gray-500 dark:text-gray-400">{r.label}</dt>
+                      <dd className="text-xs text-gray-900 dark:text-white font-medium">{r.value}</dd>
                     </div>
                   ))}
                 </dl>
               )}
               <button
                 onClick={openEdit}
-                className="mt-2 flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:text-blue-800"
+                className="mt-2 flex items-center gap-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800"
               >
                 <Edit2 size={12} />
                 Edit
@@ -231,13 +231,13 @@ function SchemeInfoPanel({ amfiCode, benchmarkName }: { amfiCode: string; benchm
                 ] as { key: keyof SchemeMeta; label: string; type: string }[]
               ).map(({ key, label, type }) => (
                 <div key={key}>
-                  <label className="text-xs text-gray-500 block mb-1">{label}</label>
+                  <label className="text-xs text-gray-500 dark:text-gray-400 block mb-1">{label}</label>
                   {type === 'textarea' ? (
                     <textarea
                       rows={3}
                       value={(form[key] as string) ?? ''}
                       onChange={e => setForm(f => ({ ...f, [key]: e.target.value || null }))}
-                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   ) : (
                     <input
@@ -251,7 +251,7 @@ function SchemeInfoPanel({ amfiCode, benchmarkName }: { amfiCode: string; benchm
                             : e.target.value || null,
                         }))
                       }
-                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   )}
                 </div>
@@ -383,7 +383,7 @@ export default function SchemeDetailPage() {
   }
 
   if (schemeLoading) return <Spinner />
-  if (!scheme) return <div className="p-6 text-gray-500">Scheme not found</div>
+  if (!scheme) return <div className="p-6 text-gray-500 dark:text-gray-400">Scheme not found</div>
 
   const hasSipReturns =
     snapshot?.sip_return_1y != null ||
@@ -403,20 +403,20 @@ export default function SchemeDetailPage() {
     <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex items-start gap-4">
-        <button onClick={() => navigate('/schemes')} className="p-2 rounded-lg hover:bg-gray-100 text-gray-400">
+        <button onClick={() => navigate('/schemes')} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 dark:text-gray-400">
           <ArrowLeft size={20} />
         </button>
         <div className="flex-1">
-          <h2 className="text-xl font-bold text-gray-900">{scheme.scheme_name}</h2>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white">{scheme.scheme_name}</h2>
           <div className="flex gap-3 mt-1 flex-wrap">
-            <span className="text-sm text-gray-500">{scheme.amc_name}</span>
-            <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded">AMFI: {scheme.amfi_code}</span>
+            <span className="text-sm text-gray-500 dark:text-gray-400">{scheme.amc_name}</span>
+            <span className="text-xs text-gray-400 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded">AMFI: {scheme.amfi_code}</span>
             {scheme.isin_div_payout_growth && (
-              <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded">ISIN: {scheme.isin_div_payout_growth}</span>
+              <span className="text-xs text-gray-400 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded">ISIN: {scheme.isin_div_payout_growth}</span>
             )}
           </div>
           {scheme.scheme_category && (
-            <span className="inline-block mt-2 text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-md font-medium">
+            <span className="inline-block mt-2 text-xs bg-blue-50 text-blue-700 dark:text-blue-300 px-2 py-1 rounded-md font-medium">
               {scheme.scheme_category}
             </span>
           )}
@@ -463,14 +463,14 @@ export default function SchemeDetailPage() {
           { label: 'Latest NAV', value: snapshot?.latest_nav ? formatNAV(snapshot.latest_nav) : '—', sub: snapshot?.nav_date ? formatDate(snapshot.nav_date) : 'No data yet' },
           { label: 'AUM', value: snapshot?.aum_cr ? formatCrores(snapshot.aum_cr) : '—', sub: 'Assets under management' },
           { label: 'Expense Ratio', value: snapshot?.expense_ratio ? formatPercent(snapshot.expense_ratio) : '—', sub: 'Total expense ratio' },
-          { label: '1Y Return', value: snapshot?.return_1y != null ? formatReturn(snapshot.return_1y) : '—', sub: 'Annualized', color: snapshot?.return_1y != null ? returnColor(snapshot.return_1y) : 'text-gray-400' },
+          { label: '1Y Return', value: snapshot?.return_1y != null ? formatReturn(snapshot.return_1y) : '—', sub: 'Annualized', color: snapshot?.return_1y != null ? returnColor(snapshot.return_1y) : 'text-gray-400 dark:text-gray-400' },
           { label: '52W High', value: snapshot?.nav_52w_high != null ? formatNAV(snapshot.nav_52w_high) : '—', sub: '52-week high NAV' },
           { label: '52W Low',  value: snapshot?.nav_52w_low  != null ? formatNAV(snapshot.nav_52w_low)  : '—', sub: '52-week low NAV' },
         ].map(({ label, value, sub, color }) => (
-          <div key={label} className="card border border-gray-100">
-            <p className="text-xs text-gray-500">{label}</p>
-            <p className={`text-xl font-bold mt-1 ${color || 'text-gray-900'}`}>{value}</p>
-            <p className="text-xs text-gray-400 mt-0.5">{sub}</p>
+          <div key={label} className="card border border-gray-100 dark:border-gray-800">
+            <p className="text-xs text-gray-500 dark:text-gray-400">{label}</p>
+            <p className={`text-xl font-bold mt-1 ${color || 'text-gray-900 dark:text-white'}`}>{value}</p>
+            <p className="text-xs text-gray-400 dark:text-gray-400 mt-0.5">{sub}</p>
           </div>
         ))}
       </div>
@@ -478,14 +478,14 @@ export default function SchemeDetailPage() {
       {/* NAV Chart + Returns + SIP Returns */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="card lg:col-span-2">
-          <h3 className="text-sm font-semibold text-gray-700 mb-4">NAV History (1 Year)</h3>
+          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">NAV History (1 Year)</h3>
           {returnsLoading ? (
             <Spinner size="sm" />
           ) : hasHistory ? (
             <NAVLineChart data={returns!.nav_history} schemeName={scheme.scheme_name} />
           ) : (
             <div className="flex flex-col items-center justify-center py-10 text-center gap-2">
-              <p className="text-sm text-gray-400">No NAV history in database</p>
+              <p className="text-sm text-gray-400 dark:text-gray-400">No NAV history in database</p>
               <p className="text-xs text-gray-300">Use the "Sync NAV Data" button above to fetch 1-year data</p>
             </div>
           )}
@@ -494,7 +494,7 @@ export default function SchemeDetailPage() {
         <div className="space-y-4">
           {/* Returns Summary */}
           <div className="card">
-            <h3 className="text-sm font-semibold text-gray-700 mb-4">Returns Summary</h3>
+            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">Returns Summary</h3>
             {snapshot && (snapshot.return_1w != null || snapshot.return_1m != null || snapshot.return_1y != null) ? (
               <>
                 <ReturnsBarChart snapshot={snapshot} />
@@ -503,7 +503,7 @@ export default function SchemeDetailPage() {
                     const val = snapshot[key as keyof typeof snapshot] as number | null
                     return val != null ? (
                       <div key={key} className="flex justify-between items-center">
-                        <span className="text-xs text-gray-500">{label}</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">{label}</span>
                         <span className={`text-sm font-medium ${returnColor(val)}`}>{formatReturn(val)}</span>
                       </div>
                     ) : null
@@ -512,7 +512,7 @@ export default function SchemeDetailPage() {
               </>
             ) : (
               <div className="flex flex-col items-center justify-center py-6 text-center gap-1">
-                <p className="text-sm text-gray-400">No returns data</p>
+                <p className="text-sm text-gray-400 dark:text-gray-400">No returns data</p>
                 <p className="text-xs text-gray-300">Computed after NAV history is loaded</p>
               </div>
             )}
@@ -521,7 +521,7 @@ export default function SchemeDetailPage() {
           {/* SIP Returns */}
           {hasSipReturns && (
             <div className="card">
-              <h3 className="text-sm font-semibold text-gray-700 mb-4">SIP Returns</h3>
+              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">SIP Returns</h3>
               <div className="space-y-2">
                 {[
                   { label: '1Y SIP', key: 'sip_return_1y' },
@@ -531,7 +531,7 @@ export default function SchemeDetailPage() {
                   const val = snapshot?.[key as keyof typeof snapshot] as number | null | undefined
                   return val != null ? (
                     <div key={key} className="flex justify-between items-center">
-                      <span className="text-xs text-gray-500">{label}</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">{label}</span>
                       <span className={`text-sm font-medium ${returnColor(val)}`}>{formatReturn(val)}</span>
                     </div>
                   ) : null
@@ -545,7 +545,7 @@ export default function SchemeDetailPage() {
       {/* 2b. Rolling Returns */}
       <div className="card">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-semibold text-gray-700">Rolling Returns</h3>
+          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Rolling Returns</h3>
           <div className="flex gap-1">
             {[1, 3, 5].map(p => (
               <button
@@ -554,7 +554,7 @@ export default function SchemeDetailPage() {
                 className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
                   rollingPeriod === p
                     ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
                 }`}
               >
                 {p}Y
@@ -566,16 +566,16 @@ export default function SchemeDetailPage() {
         {rollingData && (
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 mb-4">
             {[
-              { label: 'Min', value: rollingData.min, color: 'text-red-600' },
-              { label: 'Max', value: rollingData.max, color: 'text-green-600' },
-              { label: 'Mean', value: rollingData.mean, color: 'text-blue-600' },
-              { label: 'Median', value: rollingData.median, color: 'text-purple-600' },
-              { label: 'Positive %', value: rollingData.positive_pct, suffix: '%', color: 'text-green-700' },
-              { label: '>8% Periods', value: rollingData.gt_8_pct, suffix: '%', color: 'text-blue-700' },
-              { label: '>12% Periods', value: rollingData.gt_12_pct, suffix: '%', color: 'text-indigo-700' },
+              { label: 'Min', value: rollingData.min, color: 'text-red-600 dark:text-red-400' },
+              { label: 'Max', value: rollingData.max, color: 'text-green-600 dark:text-green-400' },
+              { label: 'Mean', value: rollingData.mean, color: 'text-blue-600 dark:text-blue-400' },
+              { label: 'Median', value: rollingData.median, color: 'text-purple-600 dark:text-purple-400' },
+              { label: 'Positive %', value: rollingData.positive_pct, suffix: '%', color: 'text-green-700 dark:text-green-300' },
+              { label: '>8% Periods', value: rollingData.gt_8_pct, suffix: '%', color: 'text-blue-700 dark:text-blue-300' },
+              { label: '>12% Periods', value: rollingData.gt_12_pct, suffix: '%', color: 'text-indigo-700 dark:text-indigo-300' },
             ].map(({ label, value, color, suffix }) => (
-              <div key={label} className="bg-gray-50 rounded-lg p-2 text-center">
-                <p className="text-xs text-gray-500 mb-1">{label}</p>
+              <div key={label} className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-2 text-center">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{label}</p>
                 <p className={`text-sm font-bold ${color}`}>
                   {value != null ? `${value.toFixed(1)}${suffix ?? '%'}` : '—'}
                 </p>
@@ -602,14 +602,14 @@ export default function SchemeDetailPage() {
             </AreaChart>
           </ResponsiveContainer>
         ) : (
-          <p className="text-xs text-gray-400 italic text-center py-6">No rolling return data available for this period.</p>
+          <p className="text-xs text-gray-400 dark:text-gray-400 italic text-center py-6">No rolling return data available for this period.</p>
         )}
       </div>
 
       {/* 2c. Calendar Year Returns */}
       {calendarData?.years?.length > 0 && (
         <div className="card">
-          <h3 className="text-sm font-semibold text-gray-700 mb-4">Calendar Year Returns</h3>
+          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">Calendar Year Returns</h3>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={calendarData.years} margin={{ top: 5, right: 10, bottom: 0, left: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
@@ -630,35 +630,35 @@ export default function SchemeDetailPage() {
       {/* 2a. Expanded Risk Metrics */}
       {hasExpandedRisk && (
         <div className="card">
-          <h3 className="text-sm font-semibold text-gray-700 mb-4">Risk Metrics</h3>
+          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">Risk Metrics</h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             {snapshot?.sharpe_ratio != null && (
               <div>
-                <p className="text-xs text-gray-500">Sharpe Ratio</p>
-                <p className="text-lg font-bold text-gray-900 mt-1">{snapshot.sharpe_ratio.toFixed(2)}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Sharpe Ratio</p>
+                <p className="text-lg font-bold text-gray-900 dark:text-white mt-1">{snapshot.sharpe_ratio.toFixed(2)}</p>
               </div>
             )}
             {snapshot?.beta != null && (
               <div>
-                <p className="text-xs text-gray-500">Beta</p>
-                <p className="text-lg font-bold text-gray-900 mt-1">{snapshot.beta.toFixed(2)}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Beta</p>
+                <p className="text-lg font-bold text-gray-900 dark:text-white mt-1">{snapshot.beta.toFixed(2)}</p>
               </div>
             )}
             {snapshot?.std_deviation != null && (
               <div>
-                <p className="text-xs text-gray-500">Std Deviation</p>
-                <p className="text-lg font-bold text-gray-900 mt-1">{formatPercent(snapshot.std_deviation)}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Std Deviation</p>
+                <p className="text-lg font-bold text-gray-900 dark:text-white mt-1">{formatPercent(snapshot.std_deviation)}</p>
               </div>
             )}
             {snapshot?.max_drawdown != null && (
               <div>
-                <p className="text-xs text-gray-500">Max Drawdown (3Y)</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Max Drawdown (3Y)</p>
                 <p className={`text-lg font-bold mt-1 ${
                   snapshot.max_drawdown > 20
-                    ? 'text-red-600'
+                    ? 'text-red-600 dark:text-red-400'
                     : snapshot.max_drawdown > 10
-                    ? 'text-amber-600'
-                    : 'text-gray-900'
+                    ? 'text-amber-600 dark:text-amber-400'
+                    : 'text-gray-900 dark:text-white'
                 }`}>
                   {snapshot.max_drawdown.toFixed(2)}%
                 </p>
@@ -666,30 +666,30 @@ export default function SchemeDetailPage() {
             )}
             {snapshot?.sortino_ratio != null && (
               <div>
-                <p className="text-xs text-gray-500">Sortino Ratio</p>
-                <p className="text-lg font-bold text-gray-900 mt-1">{snapshot.sortino_ratio.toFixed(2)}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Sortino Ratio</p>
+                <p className="text-lg font-bold text-gray-900 dark:text-white mt-1">{snapshot.sortino_ratio.toFixed(2)}</p>
               </div>
             )}
             {snapshot?.calmar_ratio != null && (
               <div>
-                <p className="text-xs text-gray-500">Calmar Ratio</p>
-                <p className="text-lg font-bold text-gray-900 mt-1">{snapshot.calmar_ratio.toFixed(2)}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Calmar Ratio</p>
+                <p className="text-lg font-bold text-gray-900 dark:text-white mt-1">{snapshot.calmar_ratio.toFixed(2)}</p>
               </div>
             )}
             {snapshot?.var_95 != null && (
               <div>
-                <p className="text-xs text-gray-500">VaR (95%, 1-day)</p>
-                <p className="text-lg font-bold text-gray-900 mt-1">{snapshot.var_95.toFixed(2)}%</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">VaR (95%, 1-day)</p>
+                <p className="text-lg font-bold text-gray-900 dark:text-white mt-1">{snapshot.var_95.toFixed(2)}%</p>
               </div>
             )}
             {snapshot?.category_rank != null && (
               <div>
-                <p className="text-xs text-gray-500">Category Rank</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Category Rank</p>
                 <div className="flex items-center gap-2 mt-1">
-                  <p className="text-lg font-bold text-gray-900">
+                  <p className="text-lg font-bold text-gray-900 dark:text-white">
                     {snapshot.category_rank}
                     {snapshot.category_count != null && (
-                      <span className="text-sm font-normal text-gray-400"> / {snapshot.category_count}</span>
+                      <span className="text-sm font-normal text-gray-400 dark:text-gray-400"> / {snapshot.category_count}</span>
                     )}
                   </p>
                   {quartileBadge(snapshot.category_quartile)}
@@ -703,17 +703,17 @@ export default function SchemeDetailPage() {
       {/* Tracking Info + optional duration metrics */}
       {snapshot && (snapshot.tracking_error_1y != null || snapshot.tracking_diff_latest != null || hasDurationMetrics) && (
         <div className="card">
-          <h3 className="text-sm font-semibold text-gray-700 mb-4">Index Fund Metrics</h3>
+          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">Index Fund Metrics</h3>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {snapshot?.tracking_error_1y != null && (
               <div>
-                <p className="text-xs text-gray-500">Tracking Error (1Y)</p>
-                <p className="text-lg font-bold text-gray-900 mt-1">{formatPercent(snapshot.tracking_error_1y)}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Tracking Error (1Y)</p>
+                <p className="text-lg font-bold text-gray-900 dark:text-white mt-1">{formatPercent(snapshot.tracking_error_1y)}</p>
               </div>
             )}
             {snapshot?.tracking_diff_latest != null && (
               <div>
-                <p className="text-xs text-gray-500">Tracking Difference (Latest)</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Tracking Difference (Latest)</p>
                 <p className={`text-lg font-bold mt-1 ${returnColor(-(snapshot.tracking_diff_latest || 0))}`}>
                   {formatPercent(snapshot.tracking_diff_latest)}
                 </p>
@@ -721,14 +721,14 @@ export default function SchemeDetailPage() {
             )}
             {topHoldings?.avg_maturity_years != null && (
               <div>
-                <p className="text-xs text-gray-500">Avg Maturity</p>
-                <p className="text-lg font-bold text-gray-900 mt-1">{topHoldings.avg_maturity_years.toFixed(2)} yrs</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Avg Maturity</p>
+                <p className="text-lg font-bold text-gray-900 dark:text-white mt-1">{topHoldings.avg_maturity_years.toFixed(2)} yrs</p>
               </div>
             )}
             {topHoldings?.modified_duration != null && (
               <div>
-                <p className="text-xs text-gray-500">Modified Duration</p>
-                <p className="text-lg font-bold text-gray-900 mt-1">{topHoldings.modified_duration.toFixed(2)}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Modified Duration</p>
+                <p className="text-lg font-bold text-gray-900 dark:text-white mt-1">{topHoldings.modified_duration.toFixed(2)}</p>
               </div>
             )}
           </div>
@@ -737,16 +737,16 @@ export default function SchemeDetailPage() {
 
       {/* 2d. Direct vs Regular Comparison */}
       <div className="card">
-        <h3 className="text-sm font-semibold text-gray-700 mb-4">Direct vs Regular Comparison</h3>
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">Direct vs Regular Comparison</h3>
         {drData?.available ? (
           <div className="space-y-4">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-gray-100">
-                    <th className="text-left text-xs text-gray-500 pb-2 pr-4 font-medium">Metric</th>
-                    <th className="text-right text-xs text-gray-500 pb-2 px-4 font-medium">Direct</th>
-                    <th className="text-right text-xs text-gray-500 pb-2 pl-4 font-medium">Regular</th>
+                  <tr className="border-b border-gray-100 dark:border-gray-800">
+                    <th className="text-left text-xs text-gray-500 dark:text-gray-400 pb-2 pr-4 font-medium">Metric</th>
+                    <th className="text-right text-xs text-gray-500 dark:text-gray-400 pb-2 px-4 font-medium">Direct</th>
+                    <th className="text-right text-xs text-gray-500 dark:text-gray-400 pb-2 pl-4 font-medium">Regular</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
@@ -760,11 +760,11 @@ export default function SchemeDetailPage() {
                       (lowerBetter ? directVal < regVal : directVal > regVal)
                     return (
                       <tr key={label}>
-                        <td className="py-2 pr-4 text-xs text-gray-600">{label}</td>
-                        <td className={`py-2 px-4 text-right text-xs font-semibold ${directBetter ? 'text-green-600' : 'text-gray-800'}`}>
+                        <td className="py-2 pr-4 text-xs text-gray-600 dark:text-gray-300">{label}</td>
+                        <td className={`py-2 px-4 text-right text-xs font-semibold ${directBetter ? 'text-green-600 dark:text-green-400' : 'text-gray-800 dark:text-gray-200'}`}>
                           {directVal != null ? fmt(directVal) : '—'}
                         </td>
-                        <td className="py-2 pl-4 text-right text-xs text-gray-600">
+                        <td className="py-2 pl-4 text-right text-xs text-gray-600 dark:text-gray-300">
                           {regVal != null ? fmt(regVal) : '—'}
                         </td>
                       </tr>
@@ -778,19 +778,19 @@ export default function SchemeDetailPage() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-2">
                 {drData.expense_gap != null && (
                   <div>
-                    <p className="text-xs text-green-700">Expense Gap</p>
+                    <p className="text-xs text-green-700 dark:text-green-300">Expense Gap</p>
                     <p className="text-sm font-bold text-green-900">{drData.expense_gap.toFixed(2)}%</p>
                   </div>
                 )}
                 {drData.return_gap_1y != null && (
                   <div>
-                    <p className="text-xs text-green-700">Return Gap (1Y)</p>
+                    <p className="text-xs text-green-700 dark:text-green-300">Return Gap (1Y)</p>
                     <p className="text-sm font-bold text-green-900">{drData.return_gap_1y.toFixed(2)}%</p>
                   </div>
                 )}
                 {drData.compounding_impact_10y_per_lakh != null && (
                   <div>
-                    <p className="text-xs text-green-700">10Y Compounding Impact (per ₹1L)</p>
+                    <p className="text-xs text-green-700 dark:text-green-300">10Y Compounding Impact (per ₹1L)</p>
                     <p className="text-sm font-bold text-green-900">
                       ₹{drData.compounding_impact_10y_per_lakh.toLocaleString('en-IN')}
                     </p>
@@ -800,8 +800,8 @@ export default function SchemeDetailPage() {
             </div>
           </div>
         ) : (
-          <div className="rounded-lg bg-gray-50 border border-gray-200 px-4 py-3">
-            <p className="text-xs text-gray-500 italic">No paired Direct/Regular plan found.</p>
+          <div className="rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 px-4 py-3">
+            <p className="text-xs text-gray-500 dark:text-gray-400 italic">No paired Direct/Regular plan found.</p>
           </div>
         )}
       </div>
@@ -809,17 +809,17 @@ export default function SchemeDetailPage() {
       {/* Top Holdings */}
       {hasTopHoldings && (
         <div className="card p-0 overflow-hidden">
-          <div className="px-4 py-3 border-b border-gray-100">
-            <h3 className="text-sm font-semibold text-gray-700">
+          <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800">
+            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
               Top Holdings
               {topHoldings?.report_month && (
-                <span className="ml-2 text-xs font-normal text-gray-400">({topHoldings.report_month})</span>
+                <span className="ml-2 text-xs font-normal text-gray-400 dark:text-gray-400">({topHoldings.report_month})</span>
               )}
             </h3>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-100">
+              <thead className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
                 <tr>
                   <th className="table-header">#</th>
                   <th className="table-header">Company</th>
@@ -830,16 +830,16 @@ export default function SchemeDetailPage() {
               </thead>
               <tbody>
                 {topHoldings!.top_holdings.slice(0, 10).map((h, i) => (
-                  <tr key={i} className="border-b border-gray-50 hover:bg-gray-50">
-                    <td className="table-cell text-gray-400 tabular-nums">{i + 1}</td>
-                    <td className="table-cell font-medium text-gray-900 max-w-[220px]">
+                  <tr key={i} className="border-b border-gray-50 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                    <td className="table-cell text-gray-400 dark:text-gray-400 tabular-nums">{i + 1}</td>
+                    <td className="table-cell font-medium text-gray-900 dark:text-white max-w-[220px]">
                       <span className="block truncate" title={h.company_name}>{h.company_name}</span>
                     </td>
-                    <td className="table-cell text-gray-500 text-xs">{h.sector || '—'}</td>
-                    <td className="table-cell text-right text-gray-800 tabular-nums">
+                    <td className="table-cell text-gray-500 dark:text-gray-400 text-xs">{h.sector || '—'}</td>
+                    <td className="table-cell text-right text-gray-800 dark:text-gray-200 tabular-nums">
                       {h.percentage_exposure != null ? `${h.percentage_exposure.toFixed(2)}%` : '—'}
                     </td>
-                    <td className="table-cell text-right text-gray-800 tabular-nums">
+                    <td className="table-cell text-right text-gray-800 dark:text-gray-200 tabular-nums">
                       {formatCr(h.market_value_cr)}
                     </td>
                   </tr>
@@ -853,18 +853,18 @@ export default function SchemeDetailPage() {
       {/* Top Sectors */}
       {hasTopSectors && (
         <div className="card">
-          <h3 className="text-sm font-semibold text-gray-700 mb-4">Top Sectors</h3>
+          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">Top Sectors</h3>
           <div className="space-y-2">
             {topHoldings!.top_sectors.map((s) => (
               <div key={s.sector} className="flex items-center gap-3">
-                <span className="w-40 shrink-0 text-xs text-gray-600 truncate" title={s.sector}>{s.sector}</span>
-                <div className="flex-1 bg-gray-100 rounded-full h-2">
+                <span className="w-40 shrink-0 text-xs text-gray-600 dark:text-gray-300 truncate" title={s.sector}>{s.sector}</span>
+                <div className="flex-1 bg-gray-100 dark:bg-gray-800 rounded-full h-2">
                   <div
                     className="bg-blue-500 h-2 rounded-full"
                     style={{ width: `${Math.min(100, s.percentage)}%` }}
                   />
                 </div>
-                <span className="w-12 text-right text-xs text-gray-700 tabular-nums">{s.percentage.toFixed(2)}%</span>
+                <span className="w-12 text-right text-xs text-gray-700 dark:text-gray-300 tabular-nums">{s.percentage.toFixed(2)}%</span>
               </div>
             ))}
           </div>
@@ -874,7 +874,7 @@ export default function SchemeDetailPage() {
       {/* 2e. Dividend / IDCW History */}
       {divSummary?.total_dividends_declared > 0 && (
         <div className="card">
-          <h3 className="text-sm font-semibold text-gray-700 mb-4">Dividend / IDCW History</h3>
+          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">Dividend / IDCW History</h3>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
             {[
               { label: 'Total Declared', value: divSummary.total_dividends_declared },
@@ -882,9 +882,9 @@ export default function SchemeDetailPage() {
               { label: 'Cumulative 3Y (₹/unit)', value: divSummary.cumulative_3y },
               { label: 'Cumulative 5Y (₹/unit)', value: divSummary.cumulative_5y },
             ].map(({ label, value }) => (
-              <div key={label} className="bg-gray-50 rounded-lg p-3">
-                <p className="text-xs text-gray-500">{label}</p>
-                <p className="text-base font-bold text-gray-900 mt-1">
+              <div key={label} className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
+                <p className="text-xs text-gray-500 dark:text-gray-400">{label}</p>
+                <p className="text-base font-bold text-gray-900 dark:text-white mt-1">
                   {value != null ? value.toFixed(4) : '—'}
                 </p>
               </div>
@@ -893,7 +893,7 @@ export default function SchemeDetailPage() {
           {divHistory?.items?.length > 0 && (
             <div className="overflow-x-auto">
               <table className="w-full text-xs">
-                <thead className="bg-gray-50 border-b border-gray-100">
+                <thead className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
                   <tr>
                     <th className="table-header">Record Date</th>
                     <th className="table-header text-right">₹/Unit</th>
@@ -910,18 +910,18 @@ export default function SchemeDetailPage() {
                     dividend_yield: number
                     dividend_type: string
                   }, i: number) => (
-                    <tr key={i} className="border-b border-gray-50 hover:bg-gray-50">
+                    <tr key={i} className="border-b border-gray-50 hover:bg-gray-50 dark:hover:bg-gray-800/50">
                       <td className="table-cell tabular-nums">{d.record_date}</td>
-                      <td className="table-cell text-right tabular-nums font-medium text-green-700">
+                      <td className="table-cell text-right tabular-nums font-medium text-green-700 dark:text-green-300">
                         ₹{d.dividend_per_unit?.toFixed(4)}
                       </td>
-                      <td className="table-cell text-right tabular-nums text-gray-600">
+                      <td className="table-cell text-right tabular-nums text-gray-600 dark:text-gray-300">
                         {d.nav_on_record_date != null ? `₹${d.nav_on_record_date.toFixed(4)}` : '—'}
                       </td>
-                      <td className="table-cell text-right tabular-nums text-gray-600">
+                      <td className="table-cell text-right tabular-nums text-gray-600 dark:text-gray-300">
                         {d.dividend_yield != null ? `${d.dividend_yield.toFixed(2)}%` : '—'}
                       </td>
-                      <td className="table-cell text-gray-500">{d.dividend_type || '—'}</td>
+                      <td className="table-cell text-gray-500 dark:text-gray-400">{d.dividend_type || '—'}</td>
                     </tr>
                   ))}
                 </tbody>

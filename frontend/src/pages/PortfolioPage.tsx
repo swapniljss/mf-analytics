@@ -66,13 +66,13 @@ function ConcentrationPanel({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-          <h3 className="text-sm font-semibold text-gray-800">
+      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-lg">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+          <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200">
             Concentration Analysis
-            <span className="ml-2 text-xs text-gray-400 font-normal">{amfiCode}</span>
+            <span className="ml-2 text-xs text-gray-400 dark:text-gray-400 font-normal">{amfiCode}</span>
           </h3>
-          <button onClick={onClose} className="p-1 rounded hover:bg-gray-100 text-gray-400">
+          <button onClick={onClose} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 dark:text-gray-400">
             <X size={16} />
           </button>
         </div>
@@ -80,7 +80,7 @@ function ConcentrationPanel({
           {isLoading ? (
             <Spinner size="sm" />
           ) : !data ? (
-            <p className="text-sm text-gray-400">No concentration data available.</p>
+            <p className="text-sm text-gray-400 dark:text-gray-400">No concentration data available.</p>
           ) : (
             <div className="space-y-4">
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -90,29 +90,29 @@ function ConcentrationPanel({
                   { label: 'Top 10 Weight', value: `${data.top10_weight?.toFixed(2)}%` },
                   { label: 'HHI', value: data.hhi?.toFixed(4) ?? '—' },
                 ].map(({ label, value }) => (
-                  <div key={label} className="bg-gray-50 rounded-lg p-3">
-                    <p className="text-xs text-gray-500">{label}</p>
-                    <p className="text-base font-bold text-gray-900 mt-0.5">{value}</p>
+                  <div key={label} className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{label}</p>
+                    <p className="text-base font-bold text-gray-900 dark:text-white mt-0.5">{value}</p>
                   </div>
                 ))}
               </div>
               {data.top10?.length > 0 && (
                 <div>
-                  <p className="text-xs font-semibold text-gray-600 mb-2">Top 10 Holdings</p>
+                  <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 mb-2">Top 10 Holdings</p>
                   <div className="space-y-1.5">
                     {data.top10.map((h, i) => (
                       <div key={i} className="flex items-center gap-3">
-                        <span className="text-xs text-gray-400 w-4 shrink-0">{i + 1}</span>
-                        <span className="flex-1 text-xs text-gray-700 truncate" title={h.company_name}>
+                        <span className="text-xs text-gray-400 dark:text-gray-400 w-4 shrink-0">{i + 1}</span>
+                        <span className="flex-1 text-xs text-gray-700 dark:text-gray-300 truncate" title={h.company_name}>
                           {h.company_name}
                         </span>
-                        <div className="w-24 bg-gray-100 rounded-full h-1.5">
+                        <div className="w-24 bg-gray-100 dark:bg-gray-800 rounded-full h-1.5">
                           <div
                             className="bg-blue-500 h-1.5 rounded-full"
                             style={{ width: `${Math.min(100, h.weight)}%` }}
                           />
                         </div>
-                        <span className="text-xs text-gray-700 tabular-nums w-12 text-right">
+                        <span className="text-xs text-gray-700 dark:text-gray-300 tabular-nums w-12 text-right">
                           {h.weight?.toFixed(2)}%
                         </span>
                       </div>
@@ -192,12 +192,12 @@ function HoldingsBrowser() {
       <div className="space-y-4">
         {/* Filters */}
         <div className="card p-0 overflow-hidden">
-          <div className="flex flex-wrap gap-3 p-4 border-b border-gray-100">
+          <div className="flex flex-wrap gap-3 p-4 border-b border-gray-100 dark:border-gray-800">
             {/* Month selector */}
             <select
               value={reportMonth}
               onChange={e => { setReportMonth(e.target.value); resetPage() }}
-              className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[160px]"
+              className="border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[160px]"
             >
               <option value="">All Months</option>
               {(monthsData?.months ?? []).map(m => (
@@ -211,18 +211,18 @@ function HoldingsBrowser() {
               placeholder="AMFI code (optional)"
               value={amfiCode}
               onChange={e => { setAmfiCode(e.target.value); resetPage() }}
-              className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-44"
+              className="border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-44"
             />
 
             {/* Company search */}
             <div className="relative flex-1 min-w-[200px]">
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-400" />
               <input
                 type="text"
                 placeholder="Search company…"
                 value={searchInput}
                 onChange={e => { setSearchInput(e.target.value); resetPage() }}
-                className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-9 pr-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
@@ -230,7 +230,7 @@ function HoldingsBrowser() {
             <select
               value={sector}
               onChange={e => { setSector(e.target.value); resetPage() }}
-              className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[160px]"
+              className="border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[160px]"
             >
               <option value="">All Sectors</option>
               {(sectorsData?.sectors ?? []).map(s => (
@@ -249,7 +249,7 @@ function HoldingsBrowser() {
             )}
 
             {data?.total != null && (
-              <span className="self-center text-xs text-gray-400">
+              <span className="self-center text-xs text-gray-400 dark:text-gray-400">
                 {data.total.toLocaleString('en-IN')} holdings
               </span>
             )}
@@ -263,7 +263,7 @@ function HoldingsBrowser() {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-100">
+                <thead className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
                   <tr>
                     <th className="table-header">Company Name</th>
                     <th className="table-header">ISIN</th>
@@ -277,32 +277,32 @@ function HoldingsBrowser() {
                 </thead>
                 <tbody>
                   {(data.items as HoldingRow[]).map(row => (
-                    <tr key={row.id} className="border-b border-gray-50 hover:bg-gray-50">
+                    <tr key={row.id} className="border-b border-gray-50 hover:bg-gray-50 dark:hover:bg-gray-800/50">
                       <td className="table-cell max-w-[220px]">
-                        <span className="block truncate font-medium text-gray-900" title={row.company_name}>
+                        <span className="block truncate font-medium text-gray-900 dark:text-white" title={row.company_name}>
                           {row.company_name}
                         </span>
                       </td>
-                      <td className="table-cell font-mono text-xs text-gray-400">{row.company_isin || '—'}</td>
-                      <td className="table-cell text-xs text-gray-500 max-w-[140px]">
+                      <td className="table-cell font-mono text-xs text-gray-400 dark:text-gray-400">{row.company_isin || '—'}</td>
+                      <td className="table-cell text-xs text-gray-500 dark:text-gray-400 max-w-[140px]">
                         <span className="block truncate" title={row.sector ?? ''}>{row.sector || '—'}</span>
                       </td>
-                      <td className="table-cell text-xs text-gray-500">{row.security_class || '—'}</td>
+                      <td className="table-cell text-xs text-gray-500 dark:text-gray-400">{row.security_class || '—'}</td>
                       <td className="table-cell">
                         {row.rating
                           ? <Badge label={row.rating} variant={ratingVariant(row.rating)} />
                           : <span className="text-gray-300 text-xs">—</span>
                         }
                       </td>
-                      <td className="table-cell text-right tabular-nums text-gray-800">
+                      <td className="table-cell text-right tabular-nums text-gray-800 dark:text-gray-200">
                         {formatCr(row.market_value_cr)}
                       </td>
-                      <td className="table-cell text-right tabular-nums text-gray-800">
+                      <td className="table-cell text-right tabular-nums text-gray-800 dark:text-gray-200">
                         {row.percentage_exposure != null
                           ? `${row.percentage_exposure.toFixed(2)}%`
                           : '—'}
                       </td>
-                      <td className="table-cell text-right tabular-nums text-gray-500">
+                      <td className="table-cell text-right tabular-nums text-gray-500 dark:text-gray-400">
                         {row.quantity != null && row.quantity > 0
                           ? row.quantity.toLocaleString('en-IN')
                           : '—'}
@@ -316,8 +316,8 @@ function HoldingsBrowser() {
 
           {/* Pagination */}
           {data && data.total > 100 && (
-            <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
-              <p className="text-xs text-gray-500">
+            <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 dark:border-gray-800">
+              <p className="text-xs text-gray-500 dark:text-gray-400">
                 Page {page} — showing {Math.min(page * 100, data.total).toLocaleString('en-IN')} of {data.total.toLocaleString('en-IN')}
               </p>
               <div className="flex gap-2">
@@ -379,8 +379,8 @@ function UploadTab() {
     <div className="space-y-4">
       <div className="card space-y-4">
         <div>
-          <h3 className="text-sm font-semibold text-gray-700">Upload Portfolio Holdings</h3>
-          <p className="text-xs text-gray-400 mt-0.5">
+          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Upload Portfolio Holdings</h3>
+          <p className="text-xs text-gray-400 dark:text-gray-400 mt-0.5">
             Upload a CSV or Excel file for a specific report month. Existing holdings for that month will be replaced.
           </p>
         </div>
@@ -388,21 +388,21 @@ function UploadTab() {
         <div className="flex flex-wrap gap-3 items-end">
           {/* Report month */}
           <div>
-            <label className="text-xs text-gray-500 block mb-1">
+            <label className="text-xs text-gray-500 dark:text-gray-400 block mb-1">
               Report Month <span className="text-red-400">*</span>
             </label>
             <input
               type="month"
               value={reportMonth}
               onChange={e => { setReportMonth(e.target.value); setUploadResult(null); setUploadError(null) }}
-              className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
           {/* File input */}
           <div className="flex-1 min-w-[260px]">
-            <label className="text-xs text-gray-500 block mb-1">
-              File <span className="text-gray-400">(.csv, .xlsx)</span>
+            <label className="text-xs text-gray-500 dark:text-gray-400 block mb-1">
+              File <span className="text-gray-400 dark:text-gray-400">(.csv, .xlsx)</span>
             </label>
             <input
               type="file"
@@ -412,7 +412,7 @@ function UploadTab() {
                 setUploadResult(null)
                 setUploadError(null)
               }}
-              className="block w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700
+              className="block w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-700 dark:text-gray-300
                          file:mr-3 file:py-1 file:px-3 file:rounded file:border-0
                          file:text-xs file:font-medium file:bg-blue-50 file:text-blue-700
                          hover:file:bg-blue-100"
@@ -444,7 +444,7 @@ function UploadTab() {
         )}
 
         {/* Column reference */}
-        <div className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-xs text-blue-700 space-y-1">
+        <div className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-xs text-blue-700 dark:text-blue-300 space-y-1">
           <p className="font-semibold">Required columns</p>
           <p className="font-mono">amfi_code, company_name</p>
           <p className="font-semibold mt-2">Optional columns</p>
@@ -498,34 +498,34 @@ function OverlapTab() {
   const overlapPct = data?.overlap_percentage ?? 0
   const overlapColor =
     overlapPct >= 60
-      ? 'text-red-600'
+      ? 'text-red-600 dark:text-red-400'
       : overlapPct >= 30
-      ? 'text-amber-600'
-      : 'text-green-600'
+      ? 'text-amber-600 dark:text-amber-400'
+      : 'text-green-600 dark:text-green-400'
 
   return (
     <div className="space-y-4">
       <div className="card">
-        <h3 className="text-sm font-semibold text-gray-700 mb-4">Portfolio Overlap Analysis</h3>
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">Portfolio Overlap Analysis</h3>
         <div className="flex flex-wrap gap-3 items-end">
           <div>
-            <label className="text-xs text-gray-500 block mb-1">Scheme 1 — AMFI Code</label>
+            <label className="text-xs text-gray-500 dark:text-gray-400 block mb-1">Scheme 1 — AMFI Code</label>
             <input
               type="text"
               placeholder="e.g. 119551"
               value={amfi1}
               onChange={e => { setAmfi1(e.target.value); setEnabled(false) }}
-              className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-44"
+              className="border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-44"
             />
           </div>
           <div>
-            <label className="text-xs text-gray-500 block mb-1">Scheme 2 — AMFI Code</label>
+            <label className="text-xs text-gray-500 dark:text-gray-400 block mb-1">Scheme 2 — AMFI Code</label>
             <input
               type="text"
               placeholder="e.g. 120503"
               value={amfi2}
               onChange={e => { setAmfi2(e.target.value); setEnabled(false) }}
-              className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-44"
+              className="border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-44"
             />
           </div>
           <button
@@ -540,7 +540,7 @@ function OverlapTab() {
 
       {isError && (
         <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3">
-          <p className="text-sm text-red-700">Failed to fetch overlap data. Check AMFI codes and try again.</p>
+          <p className="text-sm text-red-700 dark:text-red-300">Failed to fetch overlap data. Check AMFI codes and try again.</p>
         </div>
       )}
 
@@ -548,34 +548,34 @@ function OverlapTab() {
         <div className="space-y-4">
           {/* Summary cards */}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-            <div className="card border border-gray-100 text-center">
-              <p className="text-xs text-gray-500">Overlap</p>
+            <div className="card border border-gray-100 dark:border-gray-800 text-center">
+              <p className="text-xs text-gray-500 dark:text-gray-400">Overlap</p>
               <p className={`text-3xl font-bold mt-1 ${overlapColor}`}>
                 {overlapPct.toFixed(1)}%
               </p>
-              <p className="text-xs text-gray-400 mt-0.5">
+              <p className="text-xs text-gray-400 dark:text-gray-400 mt-0.5">
                 {overlapPct >= 60 ? 'High overlap' : overlapPct >= 30 ? 'Moderate overlap' : 'Low overlap'}
               </p>
             </div>
-            <div className="card border border-gray-100 text-center">
-              <p className="text-xs text-gray-500">Common Stocks</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">{data.common_stocks}</p>
-              <p className="text-xs text-gray-400 mt-0.5">shared holdings</p>
+            <div className="card border border-gray-100 dark:border-gray-800 text-center">
+              <p className="text-xs text-gray-500 dark:text-gray-400">Common Stocks</p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{data.common_stocks}</p>
+              <p className="text-xs text-gray-400 dark:text-gray-400 mt-0.5">shared holdings</p>
             </div>
-            <div className="card border border-gray-100 col-span-2 sm:col-span-1">
-              <p className="text-xs text-gray-500 mb-2">Overlap Guide</p>
+            <div className="card border border-gray-100 dark:border-gray-800 col-span-2 sm:col-span-1">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Overlap Guide</p>
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-green-500" />
-                  <span className="text-xs text-gray-600">Below 30% — Good diversification</span>
+                  <span className="text-xs text-gray-600 dark:text-gray-300">Below 30% — Good diversification</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-amber-500" />
-                  <span className="text-xs text-gray-600">30–60% — Moderate redundancy</span>
+                  <span className="text-xs text-gray-600 dark:text-gray-300">30–60% — Moderate redundancy</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-red-500" />
-                  <span className="text-xs text-gray-600">Above 60% — High redundancy</span>
+                  <span className="text-xs text-gray-600 dark:text-gray-300">Above 60% — High redundancy</span>
                 </div>
               </div>
             </div>
@@ -584,14 +584,14 @@ function OverlapTab() {
           {/* Common holdings table */}
           {data.common_holdings?.length > 0 && (
             <div className="card p-0 overflow-hidden">
-              <div className="px-4 py-3 border-b border-gray-100">
-                <h3 className="text-sm font-semibold text-gray-700">
+              <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800">
+                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                   Common Holdings ({data.common_holdings.length})
                 </h3>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-gray-50 border-b border-gray-100">
+                  <thead className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
                     <tr>
                       <th className="table-header">#</th>
                       <th className="table-header">Company</th>
@@ -602,18 +602,18 @@ function OverlapTab() {
                   </thead>
                   <tbody>
                     {data.common_holdings.map((h, i) => (
-                      <tr key={i} className="border-b border-gray-50 hover:bg-gray-50">
-                        <td className="table-cell text-gray-400 tabular-nums">{i + 1}</td>
-                        <td className="table-cell font-medium text-gray-900 max-w-[240px]">
+                      <tr key={i} className="border-b border-gray-50 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                        <td className="table-cell text-gray-400 dark:text-gray-400 tabular-nums">{i + 1}</td>
+                        <td className="table-cell font-medium text-gray-900 dark:text-white max-w-[240px]">
                           <span className="block truncate" title={h.company_name}>{h.company_name}</span>
                         </td>
-                        <td className="table-cell text-right tabular-nums text-gray-700">
+                        <td className="table-cell text-right tabular-nums text-gray-700 dark:text-gray-300">
                           {h.scheme_1_weight?.toFixed(2)}%
                         </td>
-                        <td className="table-cell text-right tabular-nums text-gray-700">
+                        <td className="table-cell text-right tabular-nums text-gray-700 dark:text-gray-300">
                           {h.scheme_2_weight?.toFixed(2)}%
                         </td>
-                        <td className="table-cell text-right tabular-nums text-gray-500">
+                        <td className="table-cell text-right tabular-nums text-gray-500 dark:text-gray-400">
                           {(((h.scheme_1_weight ?? 0) + (h.scheme_2_weight ?? 0)) / 2).toFixed(2)}%
                         </td>
                       </tr>
@@ -639,7 +639,7 @@ export default function PortfolioPage() {
   return (
     <div className="p-6 space-y-4">
       {/* Tab bar */}
-      <div className="flex gap-1 border-b border-gray-200">
+      <div className="flex gap-1 border-b border-gray-200 dark:border-gray-700">
         {(
           [
             { id: 'holdings', label: 'Holdings Browser' },
@@ -652,8 +652,8 @@ export default function PortfolioPage() {
             onClick={() => setTab(t.id)}
             className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
               tab === t.id
-                ? 'border border-b-white border-gray-200 bg-white text-blue-600 -mb-px'
-                : 'text-gray-500 hover:text-gray-700'
+                ? 'border border-b-white border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-blue-600 dark:text-blue-400 -mb-px'
+                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
             }`}
           >
             {t.label}

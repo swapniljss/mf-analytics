@@ -2,6 +2,7 @@ import type { Config } from 'tailwindcss'
 
 export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
@@ -13,6 +14,103 @@ export default {
           700: '#1d4ed8',
           900: '#1e3a8a',
         },
+      },
+      fontFamily: {
+        sans: [
+          'Inter',
+          'ui-sans-serif',
+          'system-ui',
+          '-apple-system',
+          'BlinkMacSystemFont',
+          'Segoe UI',
+          'Roboto',
+          'Helvetica Neue',
+          'Arial',
+          'sans-serif',
+        ],
+      },
+      boxShadow: {
+        glow: '0 10px 30px -10px rgba(59, 130, 246, 0.45)',
+        'glow-emerald': '0 10px 30px -10px rgba(16, 185, 129, 0.45)',
+        'glow-rose': '0 10px 30px -10px rgba(244, 63, 94, 0.45)',
+        'glow-amber': '0 10px 30px -10px rgba(245, 158, 11, 0.45)',
+        'glow-violet': '0 10px 30px -10px rgba(139, 92, 246, 0.45)',
+        soft: '0 1px 2px rgba(15, 23, 42, 0.04), 0 4px 16px rgba(15, 23, 42, 0.06)',
+        'soft-lg': '0 4px 12px rgba(15, 23, 42, 0.06), 0 12px 32px rgba(15, 23, 42, 0.08)',
+      },
+      backgroundImage: {
+        'brand-gradient': 'linear-gradient(90deg, #2563eb 0%, #7c3aed 100%)',
+        'brand-gradient-br': 'linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)',
+        'app-shell':
+          'linear-gradient(135deg, #f8fafc 0%, rgba(219, 234, 254, 0.45) 45%, rgba(237, 233, 254, 0.35) 100%)',
+        'hero-text':
+          'linear-gradient(90deg, #0f172a 0%, #1e3a8a 50%, #581c87 100%)',
+      },
+      keyframes: {
+        'fade-in': {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        'fade-in-up': {
+          '0%': { opacity: '0', transform: 'translateY(12px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        'fade-in-down': {
+          '0%': { opacity: '0', transform: 'translateY(-10px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        'slide-up': {
+          '0%': { opacity: '0', transform: 'translateY(20px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        'slide-in-right': {
+          '0%': { opacity: '0', transform: 'translateX(20px)' },
+          '100%': { opacity: '1', transform: 'translateX(0)' },
+        },
+        'shimmer': {
+          '0%': { backgroundPosition: '-400px 0' },
+          '100%': { backgroundPosition: '400px 0' },
+        },
+        'blob-float': {
+          '0%, 100%': { transform: 'translate(0, 0) scale(1)' },
+          '33%': { transform: 'translate(20px, -20px) scale(1.05)' },
+          '66%': { transform: 'translate(-15px, 15px) scale(0.95)' },
+        },
+        'pulse-soft': {
+          '0%, 100%': { opacity: '1' },
+          '50%':       { opacity: '0.7' },
+        },
+        'wiggle': {
+          '0%, 100%': { transform: 'rotate(0deg)' },
+          '25%':       { transform: 'rotate(-6deg)' },
+          '75%':       { transform: 'rotate(6deg)' },
+        },
+        'sparkle': {
+          '0%, 100%': { transform: 'scale(1) rotate(0deg)',  opacity: '1' },
+          '50%':       { transform: 'scale(1.15) rotate(15deg)', opacity: '0.85' },
+        },
+        'glow-pulse': {
+          '0%, 100%': { boxShadow: '0 8px 24px -8px rgba(59,130,246,0.45)' },
+          '50%':       { boxShadow: '0 14px 36px -8px rgba(139,92,246,0.6)' },
+        },
+        'bar-shimmer': {
+          '0%':   { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(200%)' },
+        },
+      },
+      animation: {
+        'fade-in': 'fade-in 0.4s ease-out both',
+        'fade-in-up': 'fade-in-up 0.45s ease-out both',
+        'fade-in-down': 'fade-in-down 0.4s ease-out both',
+        'slide-up': 'slide-up 0.5s ease-out both',
+        'slide-in-right': 'slide-in-right 0.4s ease-out both',
+        'shimmer': 'shimmer 1.6s linear infinite',
+        'blob-float': 'blob-float 18s ease-in-out infinite',
+        'pulse-soft': 'pulse-soft 2.4s ease-in-out infinite',
+        'wiggle': 'wiggle 0.5s ease-in-out',
+        'sparkle': 'sparkle 2.5s ease-in-out infinite',
+        'glow-pulse': 'glow-pulse 3s ease-in-out infinite',
+        'bar-shimmer': 'bar-shimmer 2.4s ease-in-out infinite',
       },
     },
   },

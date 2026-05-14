@@ -34,12 +34,12 @@ export default function AUMPage() {
       {/* Controls */}
       <div className="card">
         <div className="flex flex-wrap gap-3 items-center">
-          <div className="flex rounded-lg border border-gray-200 overflow-hidden">
+          <div className="flex rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
             {(['fund', 'scheme'] as const).map((tab) => (
               <button
                 key={tab}
                 onClick={() => { setActiveTab(tab); setPage(1) }}
-                className={`px-4 py-2 text-sm font-medium transition-colors ${activeTab === tab ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                className={`px-4 py-2 text-sm font-medium transition-colors ${activeTab === tab ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/50'}`}
               >
                 {tab === 'fund' ? 'Fund-wise (AMC)' : 'Scheme-wise'}
               </button>
@@ -51,7 +51,7 @@ export default function AUMPage() {
               const [fy, period] = e.target.value.split('-').map(Number)
               setSelectedFyId(fy); setSelectedPeriodId(period); setPage(1)
             }}
-            className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             {periods?.map((p) => (
               <option key={`${p.fy_id}-${p.period_id}`} value={`${p.fy_id}-${p.period_id}`}>
@@ -64,7 +64,7 @@ export default function AUMPage() {
             placeholder={activeTab === 'fund' ? 'Search AMC...' : 'Search scheme...'}
             value={searchInput}
             onChange={(e) => { setSearchInput(e.target.value); setPage(1) }}
-            className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[200px]"
+            className="border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[200px]"
           />
         </div>
       </div>
@@ -74,7 +74,7 @@ export default function AUMPage() {
         {isLoading ? <Spinner /> : !data?.items.length ? <EmptyState message="No AUM data — trigger a sync from the API" /> : (
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-100">
+              <thead className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
                 <tr>
                   {activeTab === 'fund' ? (
                     <>
@@ -99,31 +99,31 @@ export default function AUMPage() {
               <tbody>
                 {activeTab === 'fund'
                   ? (fundData?.items ?? []).map((f) => (
-                    <tr key={f.id} className="border-b border-gray-50 hover:bg-gray-50">
-                      <td className="table-cell font-medium text-gray-900 max-w-[200px]">
+                    <tr key={f.id} className="border-b border-gray-50 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                      <td className="table-cell font-medium text-gray-900 dark:text-white max-w-[200px]">
                         <span className="block truncate">{f.amc_name}</span>
                       </td>
                       <td className="table-cell text-right font-semibold">{formatCrores(f.total_aum_cr)}</td>
-                      <td className="table-cell text-right text-green-700">{formatCrores(f.equity_aum_cr)}</td>
-                      <td className="table-cell text-right text-blue-700">{formatCrores(f.debt_aum_cr)}</td>
-                      <td className="table-cell text-right text-purple-700">{formatCrores(f.hybrid_aum_cr)}</td>
-                      <td className="table-cell text-right text-gray-500">{formatNumber(f.folio_count)}</td>
+                      <td className="table-cell text-right text-green-700 dark:text-green-300">{formatCrores(f.equity_aum_cr)}</td>
+                      <td className="table-cell text-right text-blue-700 dark:text-blue-300">{formatCrores(f.debt_aum_cr)}</td>
+                      <td className="table-cell text-right text-purple-700 dark:text-purple-300">{formatCrores(f.hybrid_aum_cr)}</td>
+                      <td className="table-cell text-right text-gray-500 dark:text-gray-400">{formatNumber(f.folio_count)}</td>
                     </tr>
                   ))
                   : (schemeData?.items ?? []).map((s) => (
-                    <tr key={s.id} className="border-b border-gray-50 hover:bg-gray-50">
+                    <tr key={s.id} className="border-b border-gray-50 hover:bg-gray-50 dark:hover:bg-gray-800/50">
                       <td className="table-cell max-w-[260px]">
-                        <span className="block truncate font-medium text-gray-900">{s.scheme_name}</span>
-                        <span className="text-xs text-gray-400">{s.amfi_code}</span>
+                        <span className="block truncate font-medium text-gray-900 dark:text-white">{s.scheme_name}</span>
+                        <span className="text-xs text-gray-400 dark:text-gray-400">{s.amfi_code}</span>
                       </td>
-                      <td className="table-cell text-gray-500 text-xs max-w-[160px]">
+                      <td className="table-cell text-gray-500 dark:text-gray-400 text-xs max-w-[160px]">
                         <span className="block truncate">{s.amc_name}</span>
                       </td>
-                      <td className="table-cell text-gray-500 text-xs max-w-[160px]">
+                      <td className="table-cell text-gray-500 dark:text-gray-400 text-xs max-w-[160px]">
                         <span className="block truncate">{s.scheme_category}</span>
                       </td>
                       <td className="table-cell text-right font-semibold">{formatCrores(s.average_aum_cr)}</td>
-                      <td className="table-cell text-right text-gray-500">{formatNumber(s.folio_count)}</td>
+                      <td className="table-cell text-right text-gray-500 dark:text-gray-400">{formatNumber(s.folio_count)}</td>
                     </tr>
                   ))
                 }
@@ -132,8 +132,8 @@ export default function AUMPage() {
           </div>
         )}
         {data && data.total_pages > 1 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
-            <p className="text-xs text-gray-500">Page {data.page} of {data.total_pages} ({data.total.toLocaleString()} records)</p>
+          <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 dark:border-gray-800">
+            <p className="text-xs text-gray-500 dark:text-gray-400">Page {data.page} of {data.total_pages} ({data.total.toLocaleString()} records)</p>
             <div className="flex gap-2">
               <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="btn-secondary disabled:opacity-40 py-1.5 px-3 text-xs">Previous</button>
               <button onClick={() => setPage((p) => Math.min(data.total_pages, p + 1))} disabled={page === data.total_pages} className="btn-secondary disabled:opacity-40 py-1.5 px-3 text-xs">Next</button>
